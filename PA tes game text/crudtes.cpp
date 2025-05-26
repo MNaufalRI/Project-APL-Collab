@@ -47,10 +47,8 @@ struct UserData {
     vector<UserCharacter> characters;
 };
 
-
-
 // Const
-const int maks_karakter = 10;
+const int maks_karakter = 5;
 const int maks_musuh = 10;
 const int maks_user = 10;
 const int maks_attempt = 3;
@@ -73,6 +71,7 @@ void enter(bool tampilkan_enter = true) {
     if (tampilkan_enter) {
         cout << "\nTekan Enter untuk kembali ke menu...";
     }
+
     cin.ignore(1000, '\n');
     cin.get();
 }
@@ -400,6 +399,8 @@ bool ScanInput(const string& input, int& output) {
 
 // ===================== MUSUH FUNCTIONS ===================== 
 void tambahMusuh() {
+    system("cls");
+
     try {
         if (jumlahMusuh >= maks_musuh) {
             throw runtime_error("Data musuh penuh! Maksimal: " + to_string(maks_musuh));
@@ -774,9 +775,10 @@ void mergeSortKarakter(Karakter karakter[], int kiri, int kanan) {
 void login(int maks_percobaan = maks_attempt) {
     int attempt = 0;
     while (attempt < maks_percobaan) {
+        system("cls");
         try {
             string username, password;
-            cout << "\n=== LOGIN ===" << endl;
+            cout << "=== LOGIN ===" << endl;
             cout << "Percobaan ke-" << attempt + 1 << " dari " << maks_percobaan << endl;
             
             cout << "Username: ";
@@ -807,10 +809,10 @@ void login(int maks_percobaan = maks_attempt) {
                     return;
                 }
             }
-            if (!found) throw runtime_error("Username/password salah!");
+            if (!found) throw runtime_error("Username/password salah!\nTekan enter..");
             
         } catch (const exception& e) {
-            cerr << "[ERROR] " << e.what() << endl;
+            cerr << "\n\n[ERROR] " << e.what() << endl;
             if (++attempt >= maks_percobaan) {
                 cerr << "Anda telah gagal login " << maks_percobaan << " kali. Program berhenti.\n";
                 exit(1);
@@ -821,8 +823,8 @@ void login(int maks_percobaan = maks_attempt) {
     }
 }
 
-
 void registrasi(int maxUsers = maks_user) {
+    system("cls");
     try {
         if (jumlahUser >= maxUsers) {
             throw runtime_error("Kapasitas user penuh! Tidak bisa mendaftar.");
@@ -882,11 +884,13 @@ void registrasi(int maxUsers = maks_user) {
 void tambahKarakter(int maxCharacters = maks_karakter) {
     try {
         if (jumlahKarakter >= maxCharacters) {
-            throw runtime_error("Data karakter penuh! Maksimal: " + to_string(maxCharacters));
+            throw runtime_error("\nData karakter penuh! Maksimal: " + to_string(maxCharacters));
         }
 
         Karakter newKarakter;
-        cout << "Nama Karakter: ";
+        system("cls");
+        cout << "=== Tambah Karakter ===";
+        cout << "\nNama Karakter: ";
         cin >> newKarakter.nama;
 
         // Cek duplikasi nama
@@ -897,18 +901,39 @@ void tambahKarakter(int maxCharacters = maks_karakter) {
         }
 
         cout << "Attack: ";
-        if (!(cin >> newKarakter.attack) || newKarakter.attack < 0) {
-            throw runtime_error("Attack harus angka >= 0!");
+        try {
+            if (!(cin >> newKarakter.attack) || newKarakter.attack < 0) {
+                throw runtime_error("\nAttack harus angka >= 0!");
+            }
+        } catch (const runtime_error& e) {
+            cout << e.what() << endl;
+            cin.clear();
+            enter();
+            return;
         }
 
         cout << "Health: ";
-        if (!(cin >> newKarakter.health) || newKarakter.health < 0) {
-            throw runtime_error("Health harus angka >= 0!");
+        try {
+            if (!(cin >> newKarakter.health) || newKarakter.health < 0) {
+                throw runtime_error("\nHealth harus angka >= 0!");
+            }
+        } catch (const runtime_error& e) {
+            cout << e.what() << endl;
+            cin.clear();
+            enter();
+            return;
         }
 
         cout << "Defense: ";
-        if (!(cin >> newKarakter.defense) || newKarakter.defense < 0) {
-            throw runtime_error("Defense harus angka >= 0!");
+        try {
+            if (!(cin >> newKarakter.defense) || newKarakter.defense < 0) {
+                throw runtime_error("\nDefense harus angka >= 0!");
+            }
+        } catch (const runtime_error& e) {
+            cout << e.what() << endl;
+            cin.clear();
+            enter();
+            return;
         }
 
         cout << "Link Gambar: ";
@@ -918,6 +943,8 @@ void tambahKarakter(int maxCharacters = maks_karakter) {
         karakter[jumlahKarakter++] = newKarakter;
         simpanKeCSV();
         cout << "Karakter berhasil ditambahkan!\n";
+        cin.clear();
+        enter();
 
     } catch (const exception& e) {
         cerr << "[ERROR] " << e.what() << endl;
@@ -927,6 +954,7 @@ void tambahKarakter(int maxCharacters = maks_karakter) {
 }
 
 void tampilkanKarakterCRUD(){
+    system("cls");
     cout << "\n==================== Daftar Karakter ====================\n"<< endl;
         cout << left << setw(5) << "No" 
              << setw(15) << "Nama"
@@ -1080,6 +1108,7 @@ void ubahKarakter(int startIndex = 0) {
 
         simpanKeCSV();
         cout << "Karakter berhasil diubah!\n";
+        enter();
 
     } catch (const exception& e) {
         cerr << "[ERROR] " << e.what() << endl;
@@ -1546,7 +1575,8 @@ void kelolaKarakter() {
     string input;
     
     while (true) {
-        cout << "\n=== KELOLA KARAKTER ===" << endl;
+        system("cls");
+        cout << "=== KELOLA KARAKTER ===" << endl;
         cout << "1. Tambah Karakter" << endl;
         cout << "2. Tampilkan Karakter" << endl;
         cout << "3. Ubah Karakter" << endl;
@@ -1832,7 +1862,7 @@ void adminMenu() {
     string input;
     
     while (true) {
-        cout << "\n=== MENU ADMIN (" << userSekarang << ") ===" << endl;
+        cout << "=== MENU ADMIN (" << userSekarang << ") ===" << endl;
         cout << "1. Kelola Karakter" << endl;
         cout << "2. Kelola Musuh" << endl;
         cout << "3. Menu Pencarian" << endl;
@@ -1927,8 +1957,9 @@ int main(int argc, char* argv[]) {
     string input;
 
     while (true) {
+        system("cls");
         if (!is_login) {
-            cout << "\n=== MENU UTAMA ===" << endl;
+            cout << "=== MENU UTAMA ===" << endl;
             cout << "1. Login" << endl;
             cout << "2. Registrasi" << endl;
             cout << "3. Keluar" << endl;
