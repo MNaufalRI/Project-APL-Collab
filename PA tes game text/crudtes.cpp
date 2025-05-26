@@ -4,26 +4,11 @@
 #include <fstream>
 #include <vector> 
 #include <limits> 
-#include <cstdlib>
-#include <ctime>
-#include <sstream>
-using std::vector;  
 using namespace std;
 
 
-// HALO TES INI DIMAS
-
 // ===================== STRUCT ===================== 
-
-struct UserKarakter { //gacha
-    string username;
-    string nama;
-    int health;
-    int defense;
-    int attack;
-    string gambar;
-};
-
+// Struct untuk menyimpan data karakter
 struct Karakter {
     string nama;
     int health;
@@ -40,11 +25,29 @@ struct Enemy {
     string gambar;
 };
 
-struct User { //untuk menyimpan data user
+// Struct untuk menyimpan data user
+struct User {
     string username;
     string password;
     bool is_admin;
 };
+
+struct UserCharacter {
+    string nama;
+    int health;
+    int defense;
+    int attack;
+    string gambar;
+};
+
+struct UserData {
+    string username;
+    string password; 
+    int coins;
+    vector<UserCharacter> characters;
+};
+
+
 
 // Const
 const int maks_karakter = 10;
@@ -63,6 +66,8 @@ bool is_login = false;
 bool is_admin = false;
 string userSekarang;
 enum SearchType { ATTACK, HEALTH, DEFENSE };
+UserData currentUserData;
+vector<UserData> allUserData;
 
 void enter(bool tampilkan_enter = true) {
     if (tampilkan_enter) {
@@ -76,142 +81,19 @@ void bersihkanBuffer() {
     cin.ignore(numeric_limits<streamsize>::max(), '\n');
 }
 
-bool ScanInput(const string& input, int& output) {
-    stringstream ss(input);
-    ss >> output;
-
-    // Cek apakah input valid (ada angka dan tidak gagal)
-    if (ss.fail()) {
-        return false;
-    }
-
-    return true;
-}
 // ===================== CSV FUNCTION ===================== 
 // Fungsi untuk menyimpan data ke CSV
-
-// Fungsi untuk menyimpan data user ke CSV
-void simpanUserKeCSV() {
-    ofstream file("users.csv");
-    
-    if (file.is_open()) {
-        file << "Username,Password,IsAdmin\n";
-        
-        for (int i = 0; i < jumlahUser; i++) {
-            file << users[i].username << ","
-                 << users[i].password << ","
-                 << users[i].is_admin << "\n";
-        }
-        file.close();
-    }
-}
-
-// Fungsi untuk memuat data user dari CSV
-void muatUserDariCSV() {
-    ifstream file("users.csv");
-    
-    if (file.is_open()) {
-        string line;
-        getline(file, line); 
-        
-        jumlahUser = 0; 
-        
-        while (getline(file, line) && jumlahUser < maks_user) {
-            stringstream ss(line);
-            string cell;
-            User newUser;
-            
-            getline(ss, newUser.username, ',');
-            getline(ss, newUser.password, ',');
-            
-            string temp;
-            getline(ss, temp, ',');
-            newUser.is_admin = (temp == "1");
-            
-            users[jumlahUser++] = newUser;
-        }
-        file.close();
-    }
-    
-    // Tambahkan admin default jika tidak ada
-    bool adminExists = false;
-    for (int i = 0; i < jumlahUser; i++) {
-        if (users[i].username == "demonia" && users[i].is_admin) {
-            adminExists = true;
-            break;
-        }
-    }
-    
-    if (!adminExists && jumlahUser < maks_user) {
-        users[jumlahUser++] = {"demonia", "utakatik", true};
-        simpanUserKeCSV();
-    }
-}
-
-// Fungsi untuk memuat karakter user dari CSV
-void muatKarakterUser(vector<UserKarakter>& karakterUser) {
-    ifstream file("characteruser.csv");
-    
-    if (file.is_open()) {
-        string line;
-        getline(file, line); // Skip header
-        
-        while (getline(file, line)) {
-            stringstream ss(line);
-            string cell;
-            UserKarakter uk;
-            
-            getline(ss, uk.username, ',');
-            getline(ss, uk.nama, ',');
-            
-            string temp;
-            getline(ss, temp, ',');
-            uk.attack = stoi(temp);
-            
-            getline(ss, temp, ',');
-            uk.health = stoi(temp);
-            
-            getline(ss, temp, ',');
-            uk.defense = stoi(temp);
-            
-            getline(ss, uk.gambar, ',');
-            
-            karakterUser.push_back(uk);
-        }
-        file.close();
-    }
-}
-
-// Fungsi untuk menyimpan karakter user ke CSV
-void simpanKarakterUser(const vector<UserKarakter>& karakterUser) {
-    ofstream file("characteruser.csv");
-    
-    if (file.is_open()) {
-        file << "Username,Nama,Attack,Health,Defense,Gambar\n";
-        
-        for (const auto& uk : karakterUser) {
-            file << uk.username << ","
-                 << uk.nama << ","
-                 << uk.attack << ","
-                 << uk.health << ","
-                 << uk.defense << ","
-                 << uk.gambar << "\n";
-        }
-        file.close();
-    }
-}
-
 void simpanKeCSV() {
-    ofstream file("characters.csv");
+    ofstream file("csvFile/charactersData.csv");
     try {
         // Cek apakah file bisa dibuka
         if (!file.is_open()) {
             throw runtime_error("Gagal membuka file characters.csv untuk ditulis!");
         }
-        
+
         // Header CSV
         file << "Nama,Attack,Health,Defense,Gambar\n";
-        
+
         // Tulis data
         for (int i = 0; i < jumlahKarakter; i++) {
             file << karakter[i].nama << ","
@@ -234,7 +116,7 @@ void simpanKeCSV() {
 }
 
 void simpanMusuhKeCSV() {
-    ofstream file("enemy.csv");
+    ofstream file("csvFile/enemy.csv");
     try {
         if (!file.is_open()) {
             throw runtime_error("Gagal membuka file enemy.csv untuk ditulis!");
@@ -264,7 +146,7 @@ void simpanMusuhKeCSV() {
 }
 
 void muatKarakterDariCSV() {
-    ifstream file("characters.csv");
+    ifstream file("csvFile/charactersData.csv");
     try {
         // Cek apakah file ada
         if (!file.is_open()) {
@@ -272,29 +154,34 @@ void muatKarakterDariCSV() {
         }
 
         string line;
-        getline(file, line); 
+        getline(file, line); // Skip header
 
+        // Reset jumlahKarakter sebelum memuat ulang
         jumlahKarakter = 0;
 
         while (getline(file, line)) {
-            if (line.empty()) continue; 
+            if (line.empty()) continue; // Skip baris kosong
 
             vector<string> row;
             stringstream ss(line);
             string cell;
 
+            // Split baris CSV
             while (getline(ss, cell, ',')) {
                 row.push_back(cell);
             }
 
+            // Validasi format CSV (harus 5 kolom)
             if (row.size() != 5) {
                 throw runtime_error("Format file CSV tidak valid (kolom tidak sesuai)!");
             }
 
+            // Cek kapasitas array
             if (jumlahKarakter >= maks_karakter) {
                 throw runtime_error("Kapasitas karakter penuh, tidak bisa memuat lebih banyak data.");
             }
 
+            // Simpan data ke struct
             karakter[jumlahKarakter].nama = row[0];
             
             try {
@@ -314,20 +201,20 @@ void muatKarakterDariCSV() {
         cout << "Data karakter berhasil dimuat (" << jumlahKarakter << " entri)\n";
     } catch (const exception& e) {
         cerr << "[ERROR] " << e.what() << endl;
-        jumlahKarakter = 0; 
+        jumlahKarakter = 0; // Reset data jika error
     }
     file.close();
 }
 
 void muatMusuhDariCSV() {
-    ifstream file("enemy.csv");
+    ifstream file("csvFile/enemy.csv");
     try {
         if (!file.is_open()) {
             throw runtime_error("File enemy.csv tidak ditemukan!");
         }
 
         string line;
-        getline(file, line); 
+        getline(file, line); // Skip header
         jumlahMusuh = 0;
 
         while (getline(file, line)) {
@@ -369,6 +256,146 @@ void muatMusuhDariCSV() {
         jumlahMusuh = 0;
     }
     file.close();
+}
+
+void simpanUserData() {
+    ofstream file("csvFile/userData.csv");
+    try {
+        if (!file.is_open()) {
+            throw runtime_error("Gagal membuka file userData.csv untuk ditulis!");
+        }
+
+        file << "Username,Password,Coins,Characters\n";
+        
+        for (const auto& user : allUserData) {
+            file << user.username << "," 
+                 << user.password << "," 
+                 << user.coins << ",";
+                 
+            for (const auto& character : user.characters) {
+                file << character.nama << "|" << character.health << "|" 
+                     << character.attack << "|" << character.defense << "|" 
+                     << character.gambar << ";";
+            }
+            file << "\n";
+        }
+    } catch (const exception& e) {
+        cerr << "[ERROR] " << e.what() << endl;
+    }
+    file.close();
+}
+
+void muatUserData() {
+    ifstream file("csvFile/userData.csv");
+    try {
+        if (!file.is_open()) {
+            throw runtime_error("File userData.csv tidak ditemukan!");
+        }
+
+        string line;
+        getline(file, line); // Skip header
+        allUserData.clear();
+
+        while (getline(file, line)) {
+            if (line.empty()) continue;
+
+            vector<string> row;
+            stringstream ss(line);
+            string cell;
+
+            while (getline(ss, cell, ',')) {
+                row.push_back(cell);
+            }
+
+            if (row.size() < 4) continue; // Minimal username, password, coins, characters
+
+            UserData user;
+            user.username = row[0];
+            user.password = row[1]; 
+            user.coins = stoi(row[2]);
+
+            // Parse characters
+            if (row.size() >= 4) { // Pastikan ada kolom characters
+                stringstream charsStream(row[3]);
+                string charData;
+                while (getline(charsStream, charData, ';')) {
+                    if (charData.empty()) continue;
+                    
+                    vector<string> charParts;
+                    stringstream charStream(charData);
+                    string part;
+                    while (getline(charStream, part, '|')) {
+                        charParts.push_back(part);
+                    }
+
+                    if (charParts.size() == 5) {
+                        UserCharacter uc;
+                        uc.nama = charParts[0];
+                        uc.health = stoi(charParts[1]);
+                        uc.attack = stoi(charParts[2]);
+                        uc.defense = stoi(charParts[3]);
+                        uc.gambar = charParts[4];
+                        user.characters.push_back(uc);
+                    }
+                }
+            }
+
+            allUserData.push_back(user);
+        }
+    } catch (const exception& e) {
+        cerr << "[ERROR] " << e.what() << endl;
+    }
+    file.close();
+}
+
+void loadCurrentUserData() {
+    for (auto& user : allUserData) {
+        if (user.username == userSekarang) {
+            currentUserData = user;
+            return;
+        }
+    }
+    
+    // Jika user baru, buat data default
+    currentUserData.username = userSekarang;
+    
+    // Cari password dari array users
+    for (int i = 0; i < jumlahUser; i++) {
+        if (users[i].username == userSekarang) {
+            currentUserData.password = users[i].password;
+            break;
+        }
+    }
+    
+    currentUserData.coins = 0;
+    
+    // Tambahkan karakter default (karakter pertama dari CSV)
+    if (jumlahKarakter > 0) {
+        UserCharacter defaultChar;
+        defaultChar.nama = karakter[0].nama;
+        defaultChar.health = karakter[0].health;
+        defaultChar.attack = karakter[0].attack;
+        defaultChar.defense = karakter[0].defense;
+        defaultChar.gambar = karakter[0].gambar;
+        currentUserData.characters.push_back(defaultChar);
+    }
+    
+    allUserData.push_back(currentUserData);
+    simpanUserData();
+}
+
+// ===================== ERROR HANDLING ===================== 
+
+bool ScanInput(const string& input, int& output) {
+    stringstream ss(input);
+    ss >> output;
+
+    // Cek apakah input valid (ada angka dan tidak gagal)
+    if (ss.fail()) {
+        return false;
+    }
+
+    return true;
 }
 
 // ===================== MUSUH FUNCTIONS ===================== 
@@ -557,8 +584,8 @@ void ubahMusuh(int startIndex = 0) {
 
         simpanMusuhKeCSV();
         cout << "Musuh berhasil diubah!\n";
-        bersihkanBuffer();
 
+        bersihkanBuffer();
 
     } catch (const exception& e) {
         cerr << "[ERROR] " << e.what() << endl;
@@ -659,19 +686,34 @@ void bubbleSortKarakter(Karakter karakter[], int jumlah) {
 // 2. Merge Sort untuk Attack (Descending)
 void merge(Karakter karakter[], int kiri, int tengah, int kanan) {
     try {
+        // Validasi parameter
+        if (kiri < 0 || tengah < kiri || kanan < tengah) {
+            throw runtime_error("Indeks tidak valid (kiri=" + to_string(kiri) + 
+                              ", tengah=" + to_string(tengah) + 
+                              ", kanan=" + to_string(kanan) + ")");
+        }
+
         int ukuranKiri = tengah - kiri + 1;
         int ukuranKanan = kanan - tengah;
 
-        // Buat array sementara
+        // Validasi ukuran array
+        if (ukuranKiri <= 0 || ukuranKanan <= 0) {
+            throw runtime_error("Ukuran sub-array tidak valid!");
+        }
+
         Karakter arrayKiri[ukuranKiri], arrayKanan[ukuranKanan];
 
-        // Salin data ke array sementara
-        for (int i = 0; i < ukuranKiri; i++)
+        // Salin data ke sub-array kiri
+        for (int i = 0; i < ukuranKiri; i++) {
             arrayKiri[i] = karakter[kiri + i];
-        for (int j = 0; j < ukuranKanan; j++)
-            arrayKanan[j] = karakter[tengah + 1 + j];
+        }
 
-        // Gabungkan kembali
+        // Salin data ke sub-array kanan
+        for (int j = 0; j < ukuranKanan; j++) {
+            arrayKanan[j] = karakter[tengah + 1 + j];
+        }
+
+        // Proses merge
         int i = 0, j = 0, k = kiri;
         while (i < ukuranKiri && j < ukuranKanan) {
             if (arrayKiri[i].attack >= arrayKanan[j].attack) {
@@ -704,19 +746,23 @@ void merge(Karakter karakter[], int kiri, int tengah, int kanan) {
 
 void mergeSortKarakter(Karakter karakter[], int kiri, int kanan) {
     try {
-        // Base case: array dengan 1 elemen sudah terurut
-        if (kiri >= kanan) {
-            return;
+        // Validasi parameter
+        if (kiri < 0 || kanan < 0 || kiri >= kanan) {
+            throw runtime_error("Indeks tidak valid (kiri=" + to_string(kiri) + 
+                              ", kanan=" + to_string(kanan) + ")");
         }
 
-        int tengah = kiri + (kanan - kiri) / 2;
-        
-        // Rekursif: urutkan bagian kiri dan kanan
-        mergeSortKarakter(karakter, kiri, tengah);
-        mergeSortKarakter(karakter, tengah + 1, kanan);
-        
-        // Gabungkan kedua bagian yang sudah terurut
-        merge(karakter, kiri, tengah, kanan);
+        if (jumlahKarakter == 0) {
+            throw runtime_error("Array karakter kosong!");
+        }
+
+        // Proses rekursif
+        if (kiri < kanan) {
+            int tengah = kiri + (kanan - kiri) / 2;
+            mergeSortKarakter(karakter, kiri, tengah);
+            mergeSortKarakter(karakter, tengah + 1, kanan);
+            merge(karakter, kiri, tengah, kanan);
+        }
 
     } catch (const exception& e) {
         cerr << "[ERROR] MergeSort gagal: " << e.what() << endl;
@@ -740,8 +786,8 @@ void login(int maks_percobaan = maks_attempt) {
             if (!(cin >> password)) throw runtime_error("Input password tidak valid!");
 
             cin.ignore(numeric_limits<streamsize>::max(), '\n');
-
-            // Cek admin khusus
+            
+             // Cek admin khusus
             if (username == "demonia" && password == "utakatik") {
                 is_login = true;
                 userSekarang = username;
@@ -750,14 +796,13 @@ void login(int maks_percobaan = maks_attempt) {
                 return;
             }
 
-            // Cek dari data user
             bool found = false;
-            for (int i = 0; i < jumlahUser; i++) {
-                if (users[i].username == username && users[i].password == password) {
+            for (const auto& user : allUserData) {
+                if (user.username == username && user.password == password) {
                     found = true;
                     is_login = true;
                     userSekarang = username;
-                    is_admin = users[i].is_admin;
+                    loadCurrentUserData(); 
                     cout << "Login berhasil!\n";
                     return;
                 }
@@ -790,8 +835,9 @@ void registrasi(int maxUsers = maks_user) {
             throw runtime_error("Username tidak boleh kosong!");
         }
 
-        for (int i = 0; i < jumlahUser; i++) {
-            if (users[i].username == username) {
+        // Cek duplikasi username
+        for (const auto& user : allUserData) {
+            if (user.username == username) {
                 throw runtime_error("Username sudah digunakan!");
             }
         }
@@ -803,16 +849,27 @@ void registrasi(int maxUsers = maks_user) {
 
         cin.ignore(numeric_limits<streamsize>::max(), '\n');
 
-        users[jumlahUser].username = username;
-        users[jumlahUser].password = password;
-        users[jumlahUser].is_admin = false; // Default: user biasa
-        jumlahUser++;
-
-        // Simpan ke CSV
-        simpanUserKeCSV();
+        // Buat user baru
+        UserData newUser;
+        newUser.username = username;
+        newUser.password = password;
+        newUser.coins = 0;
+        
+        // Tambahkan karakter default jika ada
+        if (jumlahKarakter > 0) {
+            UserCharacter defaultChar;
+            defaultChar.nama = karakter[0].nama;
+            defaultChar.health = karakter[0].health;
+            defaultChar.attack = karakter[0].attack;
+            defaultChar.defense = karakter[0].defense;
+            defaultChar.gambar = karakter[0].gambar;
+            newUser.characters.push_back(defaultChar);
+        }
+        
+        allUserData.push_back(newUser);
+        simpanUserData();
 
         cout << "Registrasi berhasil! Silakan login.\n";
-
     } catch (const exception& e) {
         cerr << "[ERROR] " << e.what() << endl;
         cin.clear(); 
@@ -821,6 +878,7 @@ void registrasi(int maxUsers = maks_user) {
 }
 
 // ===================== CHARACTER FUNCTION ===================== 
+
 void tambahKarakter(int maxCharacters = maks_karakter) {
     try {
         if (jumlahKarakter >= maxCharacters) {
@@ -1073,72 +1131,6 @@ void hapusKarakter(bool confirm = false, int index = -1) {
         cin.ignore(1000, '\n');
     }
 }
-
-// Fungsi untuk gacha karakter
-void gachaKarakter() {
-    if (jumlahKarakter == 0) {
-        cout << "Tidak ada karakter yang tersedia untuk gacha.\n";
-        return;
-    }
-
-    // Ambil karakter acak
-    srand(time(0));
-    int randomIndex = rand() % jumlahKarakter;
-    Karakter karakterTerpilih = karakter[randomIndex];
-
-    // Simpan ke karakter user
-    vector<UserKarakter> karakterUser;
-    muatKarakterUser(karakterUser);
-    
-    UserKarakter uk;
-    uk.username = userSekarang;
-    uk.nama = karakterTerpilih.nama;
-    uk.attack = karakterTerpilih.attack;
-    uk.health = karakterTerpilih.health;
-    uk.defense = karakterTerpilih.defense;
-    uk.gambar = karakterTerpilih.gambar;
-    
-    karakterUser.push_back(uk);
-    simpanKarakterUser(karakterUser);
-
-    cout << "\n========================================\n";
-    cout << " SELAMAT! Anda mendapatkan karakter:\n";
-    cout << " Nama: " << karakterTerpilih.nama << endl;
-    cout << " Attack: " << karakterTerpilih.attack << endl;
-    cout << " Health: " << karakterTerpilih.health << endl;
-    cout << " Defense: " << karakterTerpilih.defense << endl;
-    cout << "========================================\n";
-}
-
-// Fungsi untuk menampilkan karakter user
-void tampilkanKarakterUser() {
-    vector<UserKarakter> karakterUser;
-    muatKarakterUser(karakterUser);
-
-    int count = 0;
-
-    cout << "\n=== KARAKTER MILIK " << userSekarang << " ===\n";
-    cout << "------------------------------------------------------------\n";
-    cout << left << setw(5) << "No" << setw(15) << "Nama" 
-         << setw(10) << "Attack" << setw(10) << "Health" << setw(10) << "Defense" << endl;
-    cout << "------------------------------------------------------------\n";
-
-    for (const auto& uk : karakterUser) {
-        if (uk.username == userSekarang) {
-            cout << left << setw(5) << ++count
-                 << setw(15) << uk.nama
-                 << setw(10) << uk.attack
-                 << setw(10) << uk.health
-                 << setw(10) << uk.defense << endl;
-        }
-    }
-
-    if (count == 0) {
-        cout << "Anda belum memiliki karakter.\n";
-    }
-    cout << "------------------------------------------------------------\n";
-}
-// ===================== ERROR HANDLING ===================== 
 
 
 //========================== SEARCHING ==========================
@@ -1546,9 +1538,9 @@ void menuSearch() {
     }
 }
 
+// ===================== SUB MENU FUNCTION ===================== 
 
 // ===================== MENU KELOLA KARAKTER =====================
-
 void kelolaKarakter() {
     int pilihan;
     string input;
@@ -1562,13 +1554,13 @@ void kelolaKarakter() {
         cout << "5. Kembali ke Menu Admin" << endl;
         cout << "Pilihan: ";
         getline(cin, input);
-        
+
         if (!ScanInput(input, pilihan)) {
             cout << "Input tidak valid! Harap masukkan angka 1-5." << endl;
             enter();
             continue;
         }
-        
+
         switch (pilihan) {
             case 1: tambahKarakter(); break;
             case 2: tampilkanKarakter(); break;
@@ -1576,7 +1568,7 @@ void kelolaKarakter() {
             case 4: hapusKarakter(); break;
             case 5: return; // Kembali ke menu admin
             default:
-            cout << "Pilihan tidak valid!" << endl;
+                cout << "Pilihan tidak valid!" << endl;
         }
     }
 }
@@ -1595,13 +1587,13 @@ void kelolaMusuh() {
         cout << "5. Kembali ke Menu Admin" << endl;
         cout << "Pilihan: ";
         getline(cin, input);
-        
+
         if (!ScanInput(input, pilihan)) {
             cout << "Input tidak valid! Harap masukkan angka 1-5." << endl;
             enter();
             continue;
         }
-        
+
         switch (pilihan) {
             case 1: tambahMusuh(); break;
             case 2: tampilkanMusuh(); break;
@@ -1609,12 +1601,232 @@ void kelolaMusuh() {
             case 4: hapusMusuh(); break;
             case 5: return; // Kembali ke menu admin
             default:
-            cout << "Pilihan tidak valid!" << endl;
+                cout << "Pilihan tidak valid!" << endl;
         }
     }
 }
 
-// ===================== SUB MENU FUNCTION =====================
+// ===================== BATTLE SYSTEM =====================
+void tampilkanBattleStatus(const UserCharacter& player, const Enemy& enemy, int turn) {
+    cout << "\n=== TURN " << turn << " ===" << endl;
+    cout << "----------------------------------------\n";
+    cout << "| " << left << setw(15) << player.nama << " vs " << setw(15) << enemy.nama << " |\n";
+    cout << "----------------------------------------\n";
+    cout << "| HEALTH: " << setw(5) << player.health << " | " << setw(5) << enemy.health << " |\n";
+    cout << "| ATTACK: " << setw(5) << player.attack << " | " << setw(5) << enemy.attack << " |\n";
+    cout << "| DEFENSE:" << setw(5) << player.defense << " | " << setw(5) << enemy.defense << " |\n";
+    cout << "----------------------------------------\n\n";
+}
+
+void battleWithEnemy() {
+    try {
+        if (currentUserData.characters.empty()) {
+            throw runtime_error("Anda tidak memiliki karakter untuk bertarung!");
+        }
+
+        if (jumlahMusuh == 0) {
+            throw runtime_error("Tidak ada musuh yang tersedia untuk bertarung!");
+        }
+
+        // Pilih musuh acak
+        int randomEnemyIndex = rand() % jumlahMusuh;
+        Enemy enemy = musuh[randomEnemyIndex];
+        
+        cout << "\n=== ANDA AKAN MELAWAN ===\n";
+        cout << "Nama: " << enemy.nama << endl;
+        cout << "Health: " << enemy.health << endl;
+        cout << "Attack: " << enemy.attack << endl;
+        cout << "Defense: " << enemy.defense << endl;
+        cout << "--------------------------\n";
+
+        // Pilih karakter
+        cout << "\nPilih karakter Anda:\n";
+        for (int i = 0; i < currentUserData.characters.size(); i++) {
+            cout << i+1 << ". " << currentUserData.characters[i].nama 
+                 << " (HP: " << currentUserData.characters[i].health 
+                 << ", ATK: " << currentUserData.characters[i].attack 
+                 << ", DEF: " << currentUserData.characters[i].defense << ")\n";
+        }
+        cout << "0. Kembali\n";
+        cout << "Pilihan: ";
+
+        int charChoice;
+        string input;
+        getline(cin, input);
+        
+        if (!ScanInput(input, charChoice)) {
+            throw runtime_error("Input tidak valid!");
+        }
+
+        if (charChoice == 0) return;
+        if (charChoice < 1 || charChoice > currentUserData.characters.size()) {
+            throw runtime_error("Pilihan karakter tidak valid!");
+        }
+
+        UserCharacter player = currentUserData.characters[charChoice-1];
+        UserCharacter originalPlayer = player; // Simpan stat awal
+        
+        // Battle loop
+        int turn = 1;
+        bool playerRan = false;
+        
+        while (player.health > 0 && enemy.health > 0) {
+            tampilkanBattleStatus(player, enemy, turn);
+            
+            // Player turn
+            cout << "1. Serang\n";
+            cout << "2. Kabur\n";
+            cout << "Pilihan: ";
+            
+            int battleChoice;
+            getline(cin, input);
+            if (!ScanInput(input, battleChoice)) {
+                cout << "Input tidak valid!\n";
+                continue;
+            }
+            
+            if (battleChoice == 1) {
+                // Hitung damage player ke enemy
+                int damage = max(1, player.attack - enemy.defense/2);
+                enemy.health -= damage;
+                cout << player.nama << " menyerang " << enemy.nama << " dengan damage " << damage << "!\n";
+                
+                if (enemy.health <= 0) {
+                    cout << enemy.nama << " dikalahkan!\n";
+                    break;
+                }
+            } 
+            else if (battleChoice == 2) {
+                // 70% chance untuk kabur berhasil
+                if (rand() % 10 < 7) {
+                    cout << "Anda berhasil kabur dari pertarungan!\n";
+                    playerRan = true;
+                    break;
+                } else {
+                    cout << "Gagal kabur!\n";
+                }
+            }
+            else {
+                cout << "Pilihan tidak valid!\n";
+                continue;
+            }
+            
+            // Enemy turn (jika masih hidup)
+            if (enemy.health > 0) {
+                int damage = max(1, enemy.attack - player.defense/2);
+                player.health -= damage;
+                cout << enemy.nama << " menyerang " << player.nama << " dengan damage " << damage << "!\n";
+                
+                if (player.health <= 0) {
+                    cout << player.nama << " kalah dalam pertarungan!\n";
+                    break;
+                }
+            }
+            
+            turn++;
+        }
+        
+        // Update karakter player
+        currentUserData.characters[charChoice-1] = player;
+        
+        // Jika menang, dapatkan koin
+        if (enemy.health <= 0 && !playerRan) {
+            int coinsEarned = (enemy.attack + enemy.defense) / 2;
+            currentUserData.coins += coinsEarned;
+            cout << "\nAnda memenangkan pertarungan! Mendapatkan " << coinsEarned << " koin.\n";
+            cout << "Total koin Anda sekarang: " << currentUserData.coins << endl;
+        }
+        
+        // Simpan data user
+        for (auto& user : allUserData) {
+            if (user.username == userSekarang) {
+                user = currentUserData;
+                break;
+            }
+        }
+        simpanUserData();
+        
+    } catch (const exception& e) {
+        cerr << "[ERROR] " << e.what() << endl;
+    }
+    enter();
+}
+
+// ===================== GACHA SYSTEM =====================
+void gachaCharacter() {
+    try {
+        if (currentUserData.coins < 50) {
+            throw runtime_error("Koin tidak cukup! Diperlukan 50 koin untuk 1x spin.");
+        }
+
+        cout << "\n=== GACHA CHARACTER ===" << endl;
+        cout << "1x spin membutuhkan 50 koin\n";
+        cout << "Koin Anda: " << currentUserData.coins << endl;
+        cout << "1. Spin (50 koin)\n";
+        cout << "2. Kembali\n";
+        cout << "Pilihan: ";
+
+        int choice;
+        string input;
+        getline(cin, input);
+        if (!ScanInput(input, choice)) {
+            throw runtime_error("Input tidak valid!");
+        }
+
+        if (choice == 2) return;
+        if (choice != 1) {
+            throw runtime_error("Pilihan tidak valid!");
+        }
+
+        // Kurangi koin
+        currentUserData.coins -= 50;
+
+        // 60% chance dapat karakter, 40% zonk
+        if (rand() % 100 < 60 && jumlahKarakter > 0) {
+            // Dapat karakter acak dari pool karakter
+            int randomCharIndex = rand() % jumlahKarakter;
+            Karakter charDapat = karakter[randomCharIndex];
+
+            // Konversi ke UserCharacter
+            UserCharacter newChar;
+            newChar.nama = charDapat.nama;
+            newChar.health = charDapat.health;
+            newChar.attack = charDapat.attack;
+            newChar.defense = charDapat.defense;
+            newChar.gambar = charDapat.gambar;
+
+            // Tambahkan ke inventory user
+            currentUserData.characters.push_back(newChar);
+
+            cout << "\n==================================\n";
+            cout << " SELAMAT! Anda mendapatkan:\n";
+            cout << " " << newChar.nama << "\n";
+            cout << " Health: " << newChar.health << "\n";
+            cout << " Attack: " << newChar.attack << "\n";
+            cout << " Defense: " << newChar.defense << "\n";
+            cout << "==================================\n";
+        } else {
+            cout << "\nMaaf, Anda tidak mendapatkan karakter apapun!\n";
+            cout << "Coba lagi lain kali!\n";
+        }
+
+        // Update data user
+        for (auto& user : allUserData) {
+            if (user.username == userSekarang) {
+                user = currentUserData;
+                break;
+            }
+        }
+        simpanUserData();
+
+    } catch (const exception& e) {
+        cerr << "[ERROR] " << e.what() << endl;
+    }
+    enter();
+}
+
+
+// ===================== MENU ADMIN YANG DISEDERHANAKAN =====================
 void adminMenu() {
     int pilihan;
     string input;
@@ -1627,13 +1839,13 @@ void adminMenu() {
         cout << "4. Logout" << endl;
         cout << "Pilihan: ";
         getline(cin, input);
-        
+
         if (!ScanInput(input, pilihan)) {
             cout << "Input tidak valid! Harap masukkan angka 1-4." << endl;
             enter();
             continue;
         }
-        
+
         switch (pilihan) {
             case 1: kelolaKarakter(); break;
             case 2: kelolaMusuh(); break;
@@ -1653,40 +1865,51 @@ void userMenu(bool adminsmenu = true) {
     int pilihan;
     string input;
     
-    while (is_login) {  // Tambahkan loop agar menu tetap muncul
+    // Load user data saat pertama masuk menu
+    static bool firstTime = true;
+    if (firstTime) {
+        muatUserData();
+        loadCurrentUserData();
+        firstTime = false;
+    }
+    
+    while (true) {
         if (adminsmenu) {
             cout << "\n=== MENU USER (" << userSekarang << ") ===" << endl;
+            cout << "Koin: " << currentUserData.coins << endl;
+            cout << "Jumlah Karakter: " << currentUserData.characters.size() << endl;
         }
         cout << "1. Lihat Karakter" << endl;
         cout << "2. Lihat Karakter (Detailed)" << endl;
-        cout << "3. Gacha Karakter" << endl;
-        cout << "4. Lihat Karakter Saya" << endl;
+        cout << "3. Battle dengan Musuh" << endl;
+        cout << "4. Gacha Character (50 koin)" << endl;
         cout << "5. Logout" << endl;
         cout << "Pilihan: ";
         getline(cin, input);
 
         if (!ScanInput(input, pilihan)) {
-            cout << "Input tidak valid! Masukkan angka." << endl;
+            cout << "Input tidak valid! Masukkan angka antara 1-5." << endl;
             continue;
         }
 
         switch (pilihan) {
             case 1: 
-                tampilkanKarakter();
+                tampilkanKarakter(); 
                 break;
             case 2:
-                tampilkanKarakter(true);
+                tampilkanKarakter(true); 
                 break;
             case 3:
-                gachaKarakter();
+                battleWithEnemy(); 
                 break;
             case 4:
-                tampilkanKarakterUser();
+                gachaCharacter(); 
                 break;
             case 5:
                 is_login = false;
+                firstTime = true; // Reset untuk login berikutnya
                 cout << "Logout berhasil." << endl;
-                return;  // Keluar dari fungsi
+                return;
             default:
                 cout << "Pilihan tidak valid!" << endl;
         }
@@ -1697,8 +1920,8 @@ void userMenu(bool adminsmenu = true) {
 int main(int argc, char* argv[]) {
     muatKarakterDariCSV();
     muatMusuhDariCSV();
-    muatUserDariCSV();
-    // users[jumlahUser++] = {"demonia", "utakatik", true};  // User admin default
+    muatUserData();
+    users[jumlahUser++] = {"demonia", "utakatik", true};  // User admin default
 
     int menu_utama;
     string input;
@@ -1707,7 +1930,7 @@ int main(int argc, char* argv[]) {
         if (!is_login) {
             cout << "\n=== MENU UTAMA ===" << endl;
             cout << "1. Login" << endl;
-            cout << "2. Register" << endl;
+            cout << "2. Registrasi" << endl;
             cout << "3. Keluar" << endl;
             cout << "Pilihan: ";
             getline(cin, input);
@@ -1720,19 +1943,18 @@ int main(int argc, char* argv[]) {
 
             switch (menu_utama) {
                 case 1: login(); break;
-                case 2: registrasi(); break;
-                case 3: 
+                case 2: registrasi (); break;
+                case 3:    
                     cout << "Keluar dari program." << endl;
-                    return 0;
+                        return 0;
                 default:
-                    cout << "Pilihan tidak valid! Program Eror pake Banget" << endl;
+                    cout << "Pilihan tidak valid!" << endl;
             }
         }
         else {
             if (is_admin) {
                 adminMenu();
-            }
-            else {
+            }else {
                 userMenu();
             }
         }
