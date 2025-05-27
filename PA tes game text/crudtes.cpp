@@ -107,7 +107,6 @@ void simpanKeCSV() {
             throw runtime_error("Gagal menulis data ke file!");
         }
 
-        cout << "Data karakter berhasil disimpan ke characters.csv\n";
     } catch (const exception& e) {
         cerr << "[ERROR] " << e.what() << endl;
     }
@@ -891,7 +890,13 @@ void tambahKarakter(int maxCharacters = maks_karakter) {
         system("cls");
         cout << "=== Tambah Karakter ===";
         cout << "\nNama Karakter: ";
-        cin >> newKarakter.nama;
+        getline(cin >> ws, newKarakter.nama);
+
+        if (newKarakter.nama.length() > 15) {
+            cout << "[ERROR] Nama terlalu panjang! Maksimal 15 karakter.\n";
+            enter();
+            return;
+        }
 
         // Cek duplikasi nama
         for (int i = 0; i < jumlahKarakter; i++) {
@@ -957,7 +962,7 @@ void tampilkanKarakterCRUD(){
     system("cls");
     cout << "\n==================== Daftar Karakter ====================\n"<< endl;
         cout << left << setw(5) << "No" 
-             << setw(15) << "Nama"
+             << setw(19) << "Nama"
              << setw(10) << "Attack"
              << setw(10) << "Health"
              << setw(10) << "Defense" << endl;
@@ -965,7 +970,7 @@ void tampilkanKarakterCRUD(){
 
         for (int i = 0; i < jumlahKarakter; i++) {
             cout << left << setw(5) << i+1
-                 << setw(15) << karakter[i].nama
+                 << setw(19) << karakter[i].nama
                  << setw(10) << karakter[i].attack 
                  << setw(10) << karakter[i].health
                  << setw(10) << karakter[i].defense << endl;
@@ -1015,7 +1020,9 @@ do {
     getline(cin, input);
 
     if (!ScanInput(input, pilihan)) {
-        cout << "Input tidak valid! Masukkan angka antara 1-3." << endl;
+        system("cls");
+        tampilkanKarakterCRUD();
+        cout << "\nInput tidak valid! Masukkan angka antara 1-3." << endl;
         continue;
     }
 
@@ -1067,39 +1074,81 @@ void ubahKarakter(int startIndex = 0) {
 
         int index;
         cout << "Masukkan nomor karakter yang ingin diubah: ";
-        if (!(cin >> index) || index < startIndex + 1 || index > jumlahKarakter) {
-            throw runtime_error("Nomor tidak valid! ");
+
+        try {
+            if (!(cin >> index) || index < startIndex + 1 || index > jumlahKarakter) {
+                throw runtime_error("Nomor tidak valid!");
+            }
+            index--;
+        } catch (const runtime_error& e) {
+            cout << "[ERROR] " << e.what() << endl;
+            cin.clear();         // Reset status error input
+            bersihkanBuffer();   // Buang sisa input di buffer
+            enter();
+            return;
         }
-        index--;
 
         // Input data baru
         string namaBaru;
         cout << "Nama Baru: ";
-        cin >> namaBaru;
+        getline(cin >> ws, namaBaru);
+
+        if (namaBaru.length() > 15) {
+            cout << "[ERROR] Nama terlalu panjang! Maksimal 15 karakter.\n";
+            enter();
+            return;
+        }
 
         // Cek duplikasi nama (kecuali untuk dirinya sendiri)
-        for (int i = 0; i < jumlahKarakter; i++) {
-            if (i != index && karakter[i].nama == namaBaru) {
-                throw runtime_error("Nama sudah digunakan oleh karakter lain!");
+        try {
+            for (int i = 0; i < jumlahKarakter; i++) {
+                if (i != index && karakter[i].nama == namaBaru) {
+                    throw runtime_error("Nama sudah digunakan oleh karakter lain!");
+                }
             }
+        } catch (const runtime_error& e) {
+            cout << "[ERROR] " << e.what() << endl;
+            cin.clear();
+            enter();  // atau bisa return langsung, tergantung logika program kamu
+            return;
         }
 
         karakter[index].nama = namaBaru;
 
         cout << "Attack Baru: ";
-        if (!(cin >> karakter[index].attack) || karakter[index].attack < 0) {
-            throw runtime_error("Attack harus angka >= 0!");
+        try {
+            if (!(cin >> karakter[index].attack) || karakter[index].attack < 0) {
+                throw runtime_error("\nAttack harus angka >= 0!");
+            }
+        } catch (const runtime_error& e) {
+            cout << e.what() << endl;
+            cin.clear();
+            enter();
+            return;
         }
 
-        // Validasi health dan defense
         cout << "Health Baru: ";
-        if (!(cin >> karakter[index].health) || karakter[index].health < 0) {
-            throw runtime_error("Health harus angka >= 0!");
+        try {
+            if (!(cin >> karakter[index].health) || karakter[index].health < 0) {
+                throw runtime_error("\nHealth harus angka >= 0!");
+            }
+        } catch (const runtime_error& e) {
+            cout << e.what() << endl;
+            cin.clear();
+            enter();
+            return;
         }
 
         cout << "Defense Baru: ";
-        if (!(cin >> karakter[index].defense) || karakter[index].defense < 0) {
-            throw runtime_error("Defense harus angka >= 0!");
+        try {
+            if (!(cin >> karakter[index].defense) || karakter[index].defense < 0) {
+                throw runtime_error("\nDefense harus angka >= 0!");
+            }
+        } catch (const runtime_error& e) {
+            cout << e.what() << endl;
+            cin.clear();
+            enter();
+            return;
         }
 
         cout << "Link Gambar Baru: ";
@@ -1143,6 +1192,7 @@ void hapusKarakter(bool confirm = false, int index = -1) {
                 hapusKarakter(true, index);
             } else {
                 cout << "Penghapusan dibatalkan.\n";
+                enter();
                 return;
             }
         } else {
@@ -1153,6 +1203,7 @@ void hapusKarakter(bool confirm = false, int index = -1) {
             jumlahKarakter--;
             simpanKeCSV();
             cout << "Karakter berhasil dihapus!\n";
+            enter();
         }
     } catch (const exception& e) {
         cerr << "[ERROR] " << e.what() << endl;
@@ -1860,8 +1911,8 @@ void gachaCharacter() {
 void adminMenu() {
     int pilihan;
     string input;
-    
     while (true) {
+        system("cls");
         cout << "=== MENU ADMIN (" << userSekarang << ") ===" << endl;
         cout << "1. Kelola Karakter" << endl;
         cout << "2. Kelola Musuh" << endl;
