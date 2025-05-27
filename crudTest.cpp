@@ -11,8 +11,6 @@ using std::vector;
 using namespace std;
 
 
-// HALO TES INI DIMAS
-
 // ===================== STRUCT ===================== 
 
 struct UserKarakter { //gacha
