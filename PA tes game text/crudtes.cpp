@@ -386,7 +386,87 @@ bool ScanInput(const string& input, int& output) {
 }
 
 // ===================== MUSUH FUNCTIONS ===================== 
+void tambahMusuh() {
+    system("cls");
 
+    try {
+        if (jumlahMusuh >= maks_musuh) {
+            throw runtime_error("Data musuh penuh! Maksimal: " + to_string(maks_musuh));
+        }
+
+        Enemy newEnemy;
+        cout << "=== Tambah Musuh ===";
+        cout << "\n\nNama Musuh: ";
+        getline(cin >> ws, newEnemy.nama);
+
+        if (newEnemy.nama.length() > 15) {
+            cout << "[ERROR] Nama terlalu panjang! Maksimal 15 karakter.\n";
+            enter();
+            return;
+        }
+
+        // Cek duplikasi nama
+        try {
+            for (int i = 0; i < jumlahMusuh; i++) {
+                if (musuh[i].nama == newEnemy.nama) {
+                    throw runtime_error("Nama musuh sudah digunakan!");
+                }
+            }
+        } catch (const runtime_error& e) {
+            cout << "[ERROR] " << e.what() << endl;
+            enter();
+            return;
+        }
+
+        // Input Attack
+        cout << "Attack: ";
+        try {
+            if (!(cin >> newEnemy.attack) || newEnemy.attack < 0) {
+                throw runtime_error("Attack harus angka >= 0!");
+            }
+        } catch (const runtime_error& e) {
+            cout << "[ERROR] " << e.what() << endl;
+            enter();
+            return;
+        }
+
+        // Input Health
+        cout << "Health: ";
+        try {
+            if (!(cin >> newEnemy.health) || newEnemy.health < 0) {
+                throw runtime_error("Health harus angka >= 0!");
+            }
+        } catch (const runtime_error& e) {
+            cout << "[ERROR] " << e.what() << endl;
+            enter();
+            return;
+        }
+
+        // Input Defense
+        cout << "Defense: ";
+        try {
+            if (!(cin >> newEnemy.defense) || newEnemy.defense < 0) {
+                throw runtime_error("Defense harus angka >= 0!");
+            }
+        } catch (const runtime_error& e) {
+            cout << "[ERROR] " << e.what() << endl;
+            enter();
+            return;
+        }
+
+        bersihkanBuffer();
+
+        musuh[jumlahMusuh++] = newEnemy;
+        simpanMusuhKeCSV();
+        cout << "\nMusuh berhasil ditambahkan!\n";
+        enter();
+
+    } catch (const exception& e) {
+        cerr << "\n[ERROR] " << e.what() << endl;
+        cin.clear();
+        cin.ignore(1000, '\n');
+    }
+}
 
 // ===================== IMPLEMENTASI SORT DAN POINTER ===================== 
 // Fungsi dengan parameter dereference
@@ -496,7 +576,7 @@ void merge(Karakter karakter[], int kiri, int tengah, int kanan) {
 void mergeSortKarakter(Karakter karakter[], int kiri, int kanan) {
     try {
         // Validasi parameter
-        if (kiri < 0 || kanan < 0 || kiri >= kanan) {
+        if (kiri < 0 || kanan < 0) {
             throw runtime_error("Indeks tidak valid (kiri=" + to_string(kiri) + 
                               ", kanan=" + to_string(kanan) + ")");
         }
@@ -639,6 +719,7 @@ void tambahKarakter(int maxCharacters = maks_karakter) {
         cout << "=== Tambah Karakter ===";
         cout << "\n\nNama Karakter: ";
         getline(cin >> ws, newKarakter.nama);
+        cin.clear();
 
         if (newKarakter.nama.length() > 15) {
             cout << "[ERROR] Nama terlalu panjang! Maksimal 15 karakter.\n";
@@ -756,6 +837,7 @@ void tampilkanKarakter(bool detailed = false) {
         cout << "2. Urutkan berdasarkan Attack (Descending)" << endl;
         cout << "3. Kembali ke Menu Utama" << endl;
         cout << "Pilihan: ";
+
         getline(cin, input);
 
         if (!ScanInput(input, pilihan)) {
@@ -770,9 +852,11 @@ void tampilkanKarakter(bool detailed = false) {
             
             if (pilihan == 1) {
                 bubbleSortKarakter(sortedKarakter, jumlahKarakter);
+                system("cls");
                 cout << "\nKarakter setelah diurutkan (Nama Ascending):\n";
             } else if (pilihan == 2) {
                 mergeSortKarakter(sortedKarakter, 0, jumlahKarakter-1);
+                system("cls");
                 cout << "\nKarakter setelah diurutkan (Attack Descending):\n";
             }
             
@@ -797,7 +881,7 @@ void tampilkanKarakter(bool detailed = false) {
         
         else if (pilihan != 3) {
             tampilkanKarakterCRUD();
-            cout << "Pilihan tidak valid! Masukkan angka antara 1-3." << endl;
+            cout << "\nPilihan tidak valid! Masukkan angka antara 1-3." << endl;
         }
     } while (pilihan != 3);
 }
@@ -917,15 +1001,22 @@ void hapusKarakter(bool confirm = false, int index = -1) {
             tampilkanKarakterCRUD();
             
             cout << "Masukkan nomor karakter yang ingin dihapus: ";
-            if (!(cin >> index) || index < 1 || index > jumlahKarakter) {
-                throw runtime_error("Nomor tidak valid!");
+            try {
+                if (!(cin >> index) || index < 1 || index > jumlahKarakter) {
+                    throw runtime_error("Nomor tidak valid!");
+                }
+            } catch (const exception& e) {
+                cerr << "\n[ERROR] " << e.what() << endl;
+                cin.clear();
+                enter();
+                return;
             }
             index--;
 
             cout << "Apakah Anda yakin ingin menghapus " << karakter[index].nama << "? (y/n): ";
             char choice;
             cin >> choice;
-            bersihkanBuffer();
+            cin.clear();
 
             if (choice == 'y' || choice == 'Y') {
                 hapusKarakter(true, index);
@@ -947,7 +1038,6 @@ void hapusKarakter(bool confirm = false, int index = -1) {
     } catch (const exception& e) {
         cerr << "[ERROR] " << e.what() << endl;
         cin.clear();
-        cin.ignore(1000, '\n');
     }
 }
 
@@ -1416,7 +1506,7 @@ void kelolaMusuh() {
         }
 
         switch (pilihan) {
-            case 1: break;
+            case 1: tambahMusuh(); break;
             case 2: break;
             case 3: break;
             case 4: break;
