@@ -317,7 +317,7 @@ void muatUserData() {
                         charParts.push_back(part);
                     }
 
-                    if (charParts.size() == 5) {
+                    if (charParts.size() == 4) {
                         UserCharacter uc;
                         uc.nama = charParts[0];
                         uc.health = stoi(charParts[1]);
@@ -516,7 +516,8 @@ void tampilkanMusuh() {
         getline(cin, input);
 
         if (!ScanInput(input, pilihan)) {
-            cout << "Input tidak valid! Harap masukkan angka 1-3." << endl;
+            tampilkanDaftarMusuhCRUD();
+            cout << "\nInput tidak valid! Harap masukkan angka 1-3." << endl;
             continue;
         }
 
@@ -535,6 +536,7 @@ void tampilkanMusuh() {
                         }
                     }
                 }
+                system("cls");
                 cout << "\nMusuh setelah diurutkan (Nama Ascending):\n";
             } else if (pilihan == 2) {
                 // Bubble Sort untuk Attack (Descending)
@@ -545,6 +547,7 @@ void tampilkanMusuh() {
                         }
                     }
                 }
+                system("cls");
                 cout << "\nMusuh setelah diurutkan (Attack Descending):\n";
             }
             
@@ -559,9 +562,122 @@ void tampilkanMusuh() {
             }
             cout << "------------------------------------------------------------\n";
         } else if (pilihan != 3) {
-            cout << "Pilihan tidak valid! Harap masukkan angka 1-3." << endl;
+            tampilkanDaftarMusuhCRUD();
+            cout << "\nPilihan tidak valid! Harap masukkan angka 1-3." << endl;
         }
     } while (pilihan != 3);
+}
+
+void ubahMusuh(int startIndex = 0) {
+    try {
+        if (jumlahMusuh == 0) {
+            cout << "Tidak ada karakter yang tersimpan.\n";
+            enter();
+            return;
+        } 
+
+        // Tampilkan daftar karakter
+        tampilkanDaftarMusuhCRUD();
+
+        int index;
+        cout << "\nMasukkan nomor musuh yang ingin diubah: ";
+        try {
+            if (!(cin >> index) || index < startIndex + 1 || index > jumlahMusuh) {
+                throw runtime_error("Nomor tidak valid!");
+            }
+
+            index--; 
+        } catch (const runtime_error& e) {
+            cout << "[ERROR] " << e.what() << endl;
+            cin.clear();
+            bersihkanBuffer();
+            enter();
+            return;
+        }
+
+        bersihkanBuffer();
+
+        Enemy tempEnemy = musuh[index]; // Salin data lama
+
+        // Input nama baru
+        cout << "Nama Baru: ";
+        getline(cin >> ws, tempEnemy.nama);
+
+        if (tempEnemy.nama.length() > 15) {
+            cout << "[ERROR] Nama terlalu panjang! Maksimal 15 karakter.\n";
+            enter();
+            return;
+        }
+
+        // Cek duplikasi nama (selain dirinya sendiri)
+        try {
+            for (int i = 0; i < jumlahMusuh; i++) {
+                if (i != index && musuh[i].nama == tempEnemy.nama) {
+                    throw runtime_error("Nama sudah digunakan oleh musuh lain!");
+                }
+            }
+        } catch (const runtime_error& e) {
+            cout << "[ERROR] " << e.what() << endl;
+            enter();
+            return;
+        }
+
+        // Input Attack
+        cout << "Attack Baru: ";
+        try {
+            if (!(cin >> tempEnemy.attack) || tempEnemy.attack < 0) {
+                throw runtime_error("Attack harus angka >= 0!");
+            }
+
+        } catch (const runtime_error& e) {
+            cout << "[ERROR] " << e.what() << endl;
+            cin.clear();
+            bersihkanBuffer();
+            enter();
+            return;
+        }
+
+        // Input Health
+        cout << "Health Baru: ";
+        try {
+            if (!(cin >> tempEnemy.health) || tempEnemy.health < 0) {
+                throw runtime_error("Health harus angka >= 0!");
+            }
+        } catch (const runtime_error& e) {
+            cout << "[ERROR] " << e.what() << endl;
+            cin.clear();
+            bersihkanBuffer();
+            enter();
+            return;
+        }
+
+        // Input Defense
+        cout << "Defense Baru: ";
+        try {
+            if (!(cin >> tempEnemy.defense) || tempEnemy.defense < 0) {
+                throw runtime_error("Defense harus angka >= 0!");
+            }
+        } catch (const runtime_error& e) {
+            cout << "[ERROR] " << e.what() << endl;
+            cin.clear();
+            bersihkanBuffer();
+            enter();
+            return;
+        }
+
+        // Semua input valid → simpan ke musuh
+        musuh[index] = tempEnemy;
+        simpanMusuhKeCSV();
+        cout << "Musuh berhasil diubah!\n";
+        cin.clear();
+        bersihkanBuffer();
+        enter();
+
+    } catch (const exception& e) {
+        cerr << "[ERROR] " << e.what() << endl;
+        cin.clear();
+        cin.ignore(1000, '\n');
+    }
 }
 
 // ===================== IMPLEMENTASI SORT DAN POINTER ===================== 
@@ -1615,8 +1731,8 @@ void kelolaMusuh() {
 
         switch (pilihan) {
             case 1: tambahMusuh(); break;
-            case 2: break;
-            case 3: break;
+            case 2: tampilkanMusuh(); break;
+            case 3: ubahMusuh(); break;
             case 4: break;
             case 5: return; // Kembali ke menu admin
             default:
