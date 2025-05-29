@@ -1330,6 +1330,7 @@ void linearSearchKarakter(const string& nama) {
     try {
         if (jumlahKarakter == 0) throw runtime_error("Tidak ada karakter yang tersimpan!");
         
+        system("cls");
         bool found = false;
         cout << "\n=== HASIL PENCARIAN KARAKTER ===" << endl;
         cout << "------------------------------------------------------------" << endl;
@@ -1347,10 +1348,15 @@ void linearSearchKarakter(const string& nama) {
             }
         }
         
+        
         if (!found) {
             cout << "Tidak ditemukan karakter dengan nama mengandung '" << nama << "'" << endl;
         }
         cout << "------------------------------------------------------------" << endl;
+
+        cin.clear();
+        enter();
+        
     } catch (const exception& e) {
         cerr << "[ERROR] " << e.what() << endl;
     }
@@ -1361,6 +1367,7 @@ void linearSearchMusuh(const string& nama) {
     try {
         if (jumlahMusuh == 0) throw runtime_error("Tidak ada musuh yang tersimpan!");
         
+        system("cls");
         bool found = false;
         cout << "\n=== HASIL PENCARIAN MUSUH ===" << endl;
         cout << "------------------------------------------------------------" << endl;
@@ -1382,6 +1389,8 @@ void linearSearchMusuh(const string& nama) {
             cout << "Tidak ditemukan musuh dengan nama mengandung '" << nama << "'" << endl;
         }
         cout << "------------------------------------------------------------" << endl;
+
+        enter();
     } catch (const exception& e) {
         cerr << "[ERROR] " << e.what() << endl;
     }
@@ -1407,7 +1416,9 @@ void binarySearchKarakter(int searchValue, SearchType type) {
             case HEALTH: searchField = "Health"; break;
             case DEFENSE: searchField = "Defense"; break;
         }
-        
+
+        system("cls"); 
+
         cout << "\n=== HASIL PENCARIAN KARAKTER (Binary Search - " << searchField << ": " << searchValue << ") ===" << endl;
         cout << "------------------------------------------------------------" << endl;
         cout << left << setw(15) << "Nama" << setw(10) << "Attack" 
@@ -1483,6 +1494,8 @@ void binarySearchKarakter(int searchValue, SearchType type) {
             cout << "Tidak ditemukan karakter dengan " << searchField << " = " << searchValue << endl;
         }
         cout << "------------------------------------------------------------" << endl;
+
+        enter();
     } catch (const exception& e) {
         cerr << "[ERROR] " << e.what() << endl;
     }
@@ -1531,6 +1544,7 @@ void binarySearchMusuh(int searchValue, SearchType type) {
             case DEFENSE: searchField = "Defense"; break;
         }
         
+        system("cls");
         cout << "\n=== HASIL PENCARIAN MUSUH (Binary Search - " << searchField << ": " << searchValue << ") ===" << endl;
         cout << "------------------------------------------------------------" << endl;
         cout << left << setw(15) << "Nama" << setw(10) << "Attack" 
@@ -1591,6 +1605,8 @@ void binarySearchMusuh(int searchValue, SearchType type) {
             cout << "Tidak ditemukan musuh dengan " << searchField << " = " << searchValue << endl;
         }
         cout << "------------------------------------------------------------" << endl;
+        enter();
+
     } catch (const exception& e) {
         cerr << "[ERROR] " << e.what() << endl;
     }
@@ -1599,6 +1615,8 @@ void binarySearchMusuh(int searchValue, SearchType type) {
 void menuSearchKarakter() {
     int searchMethod;
     string input;
+    tampilkanKarakterCRUD();
+    
     cout << "\n=== PENCARIAN KARAKTER ===" << endl;
     cout << "1. Cari berdasarkan Nama (Linear Search)" << endl;
     cout << "2. Cari berdasarkan Attack (Binary Search)" << endl;
@@ -1610,6 +1628,7 @@ void menuSearchKarakter() {
 
     if (!ScanInput(input, searchMethod)) {
         cout << "Input tidak valid! Masukkan angka antara 1-5." << endl;
+        enter();
         return;
     }
     
@@ -1631,6 +1650,7 @@ void menuSearchKarakter() {
 
         if (!ScanInput(valueInput, value)) {
             cout << "Input tidak valid! Masukkan angka untuk " << field << "." << endl;
+            enter();
             return;
         }
         
@@ -1643,12 +1663,16 @@ void menuSearchKarakter() {
         binarySearchKarakter(value, type);
     } else if (searchMethod != 5) {
         cout << "Pilihan tidak valid! Masukkan angka antara 1-5." << endl;
+        enter();
     }
 }
 
 void menuSearchMusuh() {
     int searchMethod;
     string input;
+    system("cls");
+    tampilkanDaftarMusuhCRUD();
+
     cout << "\n=== PENCARIAN MUSUH ===" << endl;
     cout << "1. Cari berdasarkan Nama (Linear Search)" << endl;
     cout << "2. Cari berdasarkan Attack (Binary Search)" << endl;
@@ -1660,6 +1684,7 @@ void menuSearchMusuh() {
 
     if (!ScanInput(input, searchMethod)) {
         cout << "Input tidak valid! Masukkan angka antara 1-5." << endl;
+        enter();
         return;
     }
     
@@ -1681,6 +1706,7 @@ void menuSearchMusuh() {
 
         if (!ScanInput(valueInput, value)) {
             cout << "Input tidak valid! Masukkan angka untuk " << field << "." << endl;
+            enter();
             return;
         }
         
@@ -1693,6 +1719,7 @@ void menuSearchMusuh() {
         binarySearchMusuh(value, type);
     } else if (searchMethod != 5) {
         cout << "Pilihan tidak valid! Masukkan angka antara 1-5." << endl;
+        enter();
     }
 }
 
@@ -1700,6 +1727,7 @@ void menuSearch() {
     int searchChoice;
     string input;
 
+    system("cls");
     cout << "\n=== MENU PENCARIAN ===" << endl;
     cout << "1. Cari Karakter" << endl;
     cout << "2. Cari Musuh" << endl;
