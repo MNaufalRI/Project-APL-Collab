@@ -1828,7 +1828,167 @@ void kelolaMusuh() {
 }
 
 // ===================== BATTLE SYSTEM =====================
+void tampilkanBattleStatus(const UserCharacter& player, const Enemy& enemy, int turn) {
+    system("cls");
+    cout << "\n=== TURN " << turn << " ===" << endl;
+    cout << "----------------------------------------\n";
+    cout << "| " << left << setw(15) << player.nama << " vs " << setw(15) << enemy.nama << " |\n";
+    cout << "----------------------------------------\n";
+    cout << "| HEALTH: " << setw(5) << player.health << " | " << setw(5) << enemy.health << " |\n";
+    cout << "| ATTACK: " << setw(5) << player.attack << " | " << setw(5) << enemy.attack << " |\n";
+    cout << "| DEFENSE:" << setw(5) << player.defense << " | " << setw(5) << enemy.defense << " |\n";
+    cout << "----------------------------------------\n\n";
+}
 
+void battleWithEnemy() {
+    try {
+        if (currentUserData.characters.empty()) {
+            throw runtime_error("Anda tidak memiliki karakter untuk bertarung!");
+        }
+
+        if (jumlahMusuh == 0) {
+            throw runtime_error("Tidak ada musuh yang tersedia untuk bertarung!");
+        }
+
+        // Pilih musuh acak
+        int randomEnemyIndex = rand() % jumlahMusuh;
+        Enemy enemy = musuh[randomEnemyIndex];
+        
+        system("cls");
+        cout << "\n=== ANDA AKAN MELAWAN ===\n";
+        cout << "Nama: " << enemy.nama << endl;
+        cout << "Health: " << enemy.health << endl;
+        cout << "Attack: " << enemy.attack << endl;
+        cout << "Defense: " << enemy.defense << endl;
+        cout << "--------------------------\n";
+
+        // Pilih karakter
+        cout << "\n==================== Pilih Karakter Anda ====================\n" << endl;
+        cout << left << setw(5) << "No" 
+            << setw(20) << "Nama"
+            << setw(10) << "HP"
+            << setw(10) << "ATK"
+            << setw(10) << "DEF" << endl;
+        cout << "------------------------------------------------------------\n";
+
+        for (int i = 0; i < currentUserData.characters.size(); i++) {
+            const UserCharacter& c = currentUserData.characters[i];
+            cout << left << setw(5) << i+1
+                << setw(20) << c.nama
+                << setw(10) << c.health
+                << setw(10) << c.attack
+                << setw(10) << c.defense << endl;
+        }
+        cout << "------------------------------------------------------------\n";
+        cout << "0. Kembali" << endl;
+        cout << "Pilihan: ";
+
+        int charChoice;
+        string input;
+        getline(cin, input);
+        
+        if (!ScanInput(input, charChoice)) {
+            throw runtime_error("Input tidak valid!");
+        }
+
+        if (charChoice == 0) return;
+        if (charChoice < 1 || charChoice > currentUserData.characters.size()) {
+            throw runtime_error("Pilihan karakter tidak valid!");
+        }
+
+        UserCharacter player = currentUserData.characters[charChoice-1];
+        UserCharacter originalPlayer = player; // Simpan stat awal
+        
+        // Battle loop
+        int turn = 1;
+        bool playerRan = false;
+        
+        while (player.health > 0 && enemy.health > 0) {
+            tampilkanBattleStatus(player, enemy, turn);
+            
+            // Player turn
+            cout << "1. Serang\n";
+            cout << "2. Kabur\n";
+            cout << "Pilihan: ";
+            
+            int battleChoice;
+            getline(cin, input);
+            if (!ScanInput(input, battleChoice)) {
+                cout << "Input tidak valid!\n";
+                bersihkanBuffer();
+                continue;
+            }
+            
+            if (battleChoice == 1) {
+                // Hitung damage player ke enemy
+                int damage = max(1, player.attack - enemy.defense/2);
+                enemy.health -= damage;
+                cout << "\n" << player.nama << " menyerang " << enemy.nama << " dengan damage " << damage << "!\n";
+                
+                if (enemy.health <= 0) {
+                    cout << enemy.nama << " dikalahkan!\n";
+                    break;
+                }
+            } 
+            else if (battleChoice == 2) {
+                // 70% chance untuk kabur berhasil
+                if (rand() % 10 < 7) {
+                    cout << "Anda berhasil kabur dari pertarungan!\n";
+                    playerRan = true;
+                    break;
+                } else {
+                    cout << "Gagal kabur!\n";
+                }
+            }
+            else {
+                cout << "Pilihan tidak valid!\n";
+                bersihkanBuffer();
+                continue;
+            }
+            
+            // Enemy turn (jika masih hidup)
+            if (enemy.health > 0) {
+                int damage = max(1, enemy.attack - player.defense/2);
+                player.health -= damage;
+                cout << enemy.nama << " menyerang " << player.nama << " dengan damage " << damage << "!\n";
+                
+                if (player.health <= 0) {
+                    cout << player.nama << " kalah dalam pertarungan!\n";
+                    break;
+                }
+            }
+
+            bersihkanBuffer();
+            
+            turn++;
+        }
+        
+        // Update karakter player
+        currentUserData.characters[charChoice-1] = player;
+        
+        // Jika menang, dapatkan koin
+        if (enemy.health <= 0 && !playerRan) {
+            int coinsEarned = (enemy.attack + enemy.defense) / 2;
+            currentUserData.coins += coinsEarned;
+            cout << "\nAnda memenangkan pertarungan! Mendapatkan " << coinsEarned << " koin.\n";
+            cout << "Total koin Anda sekarang: " << currentUserData.coins << endl;
+        }
+        
+        // Simpan data user
+        for (auto& user : allUserData) {
+            if (user.username == userSekarang) {
+                user = currentUserData;
+                break;
+            }
+        }
+        currentUserData.characters[charChoice-1].health = originalPlayer.health;
+        simpanUserData();
+        
+    } catch (const exception& e) {
+        cerr << "[ERROR] " << e.what() << endl;
+    }
+    enter();
+}
 
 // ===================== GACHA SYSTEM =====================
 
@@ -1880,7 +2040,9 @@ void userMenu(bool adminsmenu = true) {
     }
     
     while (true) {
+        
         if (adminsmenu) {
+            system("cls");
             cout << "\n=== MENU USER (" << userSekarang << ") ===" << endl;
             cout << "Koin: " << currentUserData.coins << endl;
             cout << "Jumlah Karakter: " << currentUserData.characters.size() << endl;
@@ -1906,6 +2068,7 @@ void userMenu(bool adminsmenu = true) {
                 tampilkanKarakter(true); 
                 break;
             case 3:
+                battleWithEnemy();
                 break;
             case 4:
                 break;
