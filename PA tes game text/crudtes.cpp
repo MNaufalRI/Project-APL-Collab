@@ -735,11 +735,15 @@ void hapusMusuh(bool confirm = false, int indeks = -1) {
 // ===================== IMPLEMENTASI SORT DAN POINTER ===================== 
 // Fungsi dengan parameter dereference
 void printKarakterDetail(const Karakter *karakterPtr) {
-    cout << "\nDetail Karakter:" << endl;
-    cout << "Nama: " << karakterPtr->nama << endl;
-    cout << "Attack: " << karakterPtr->attack << endl;
-    cout << "Health: " << karakterPtr->health << endl;
-    cout << "Defense: " << karakterPtr->defense << endl;
+    system("cls");
+    cout << "\nDetail Karakter :" << endl;
+    cout << "Nama        : " << karakterPtr->nama << endl;
+    cout << "Attack      : " << karakterPtr->attack << endl;
+    cout << "Health      : " << karakterPtr->health << endl;
+    cout << "Defense     : " << karakterPtr->defense << endl;
+
+    int powerScore = (karakterPtr->attack + karakterPtr->defense) * (karakterPtr->health / 10);
+    cout << "Power Score : " << powerScore << endl;
 }
 
 // Fungsi dengan parameter address-of
@@ -1099,26 +1103,38 @@ void tampilkanKarakter(bool detailed = false) {
 
     if (!detailed) {
         tampilkanKarakterCRUD();
+        
     } else {
-        cout << "\n==================== Daftar Karakter (Detailed) ====================\n"<< endl;
-        cout << left << setw(5) << "No" 
-            << setw(20) << "Nama"
-            << setw(15) << "Attack"
-            << setw(15) << "Health"
-            << setw(15) << "Defense"
-            << setw(15) << "Power Score" << endl;
-        cout << "----------------------------------------------------------------------------\n";
+        tampilkanKarakterCRUD();
 
-        for (int i = 0; i < jumlahKarakter; i++) {
-            int powerScore = (karakter[i].attack + karakter[i].defense) * (karakter[i].health / 10);
-            cout << left << setw(5) << i+1
-                << setw(20) << karakter[i].nama
-                << setw(15) << karakter[i].attack 
-                << setw(15) << karakter[i].health
-                << setw(15) << karakter[i].defense
-                << setw(15) << powerScore << endl;
+        string lihatDetailInput;
+        cout << "\nLihat detail salah satu karakter? (y/n): ";
+        getline(cin, lihatDetailInput);
+
+        if (lihatDetailInput.length() == 1 && (lihatDetailInput[0] == 'y' || lihatDetailInput[0] == 'Y')) {
+            string indexInput;
+            int indexDetail;
+            cout << "Masukkan nomor karakter: ";
+            getline(cin, indexInput);
+
+            if (ScanInput(indexInput, indexDetail) && indexDetail >= 1 && indexDetail <= jumlahKarakter) {
+                printKarakterDetail(&karakter[indexDetail - 1]);
+            } else {
+                cout << "[ERROR] Nomor karakter tidak valid.\n";
+            }
+            enter();
+            return;
+
+        } else if (lihatDetailInput.length() == 1 && (lihatDetailInput[0] == 'n' || lihatDetailInput[0] == 'N')) {
+            // Tidak ingin lihat detail — kembali saja
+            return;
+
+        } else {
+            cout << "[ERROR] Input tidak valid.";
+            enter();
+            return;
         }
-        cout << "----------------------------------------------------------------------------\n";
+        
     }
 
     // sort menu 
@@ -1929,6 +1945,7 @@ void kelolaUser() {
     string input;
     
     while (true) {
+        system("cls");
         cout << "\n=== KELOLA USER ===" << endl;
         cout << "1. Tampilkan User" << endl;
         cout << "2. Hapus User" << endl;
