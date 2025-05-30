@@ -6,7 +6,6 @@
 #include <limits> 
 using namespace std;
 
-
 // ===================== STRUCT ===================== 
 // Struct untuk menyimpan data karakter
 struct Karakter {
@@ -61,8 +60,8 @@ bool is_login = false;
 bool is_admin = false;
 string userSekarang;
 enum SearchType { ATTACK, HEALTH, DEFENSE };
-UserData currentUserData;
-vector<UserData> allUserData;
+UserData dataUserSekarang;
+vector<UserData> dataUser;
 
 void bersihkanBuffer() {
     cin.ignore(numeric_limits<streamsize>::max(), '\n');
@@ -257,7 +256,7 @@ void simpanUserData() {
 
         file << "Username,Password,Coins,Characters\n";
         
-        for (const auto& user : allUserData) {
+        for (const auto& user : dataUser) {
             file << user.username << "," 
                  << user.password << "," 
                  << user.coins << ",";
@@ -283,7 +282,7 @@ void muatUserData() {
 
         string line;
         getline(file, line); // Skip header
-        allUserData.clear();
+        dataUser.clear();
 
         while (getline(file, line)) {
             if (line.empty()) continue;
@@ -296,15 +295,14 @@ void muatUserData() {
                 row.push_back(cell);
             }
 
-            if (row.size() < 4) continue; // Minimal username, password, coins, characters
-
+            if (row.size() < 4) continue; 
             UserData user;
             user.username = row[0];
             user.password = row[1]; 
             user.coins = stoi(row[2]);
 
             // Parse characters
-            if (row.size() >= 4) { // Pastikan ada kolom characters
+            if (row.size() >= 4) { 
                 stringstream charsStream(row[3]);
                 string charData;
                 while (getline(charsStream, charData, ';')) {
@@ -328,7 +326,7 @@ void muatUserData() {
                 }
             }
 
-            allUserData.push_back(user);
+            dataUser.push_back(user);
         }
     } catch (const exception& e) {
         cerr << "[ERROR] " << e.what() << endl;
@@ -336,38 +334,38 @@ void muatUserData() {
     file.close();
 }
 
-void loadCurrentUserData() {
-    for (auto& user : allUserData) {
+void loaddataUserSekarang() {
+    for (auto& user : dataUser) {
         if (user.username == userSekarang) {
-            currentUserData = user;
+            dataUserSekarang = user;
             return;
         }
     }
     
     // Jika user baru, buat data default
-    currentUserData.username = userSekarang;
+    dataUserSekarang.username = userSekarang;
     
     // Cari password dari array users
     for (int i = 0; i < jumlahUser; i++) {
         if (users[i].username == userSekarang) {
-            currentUserData.password = users[i].password;
+            dataUserSekarang.password = users[i].password;
             break;
         }
     }
     
-    currentUserData.coins = 0;
+    dataUserSekarang.coins = 0;
     
     // Tambahkan karakter default (karakter pertama dari CSV)
     if (jumlahKarakter > 0) {
-        UserCharacter defaultChar;
-        defaultChar.nama = karakter[0].nama;
-        defaultChar.health = karakter[0].health;
-        defaultChar.attack = karakter[0].attack;
-        defaultChar.defense = karakter[0].defense;
-        currentUserData.characters.push_back(defaultChar);
+        UserCharacter charDefault;
+        charDefault.nama = karakter[0].nama;
+        charDefault.health = karakter[0].health;
+        charDefault.attack = karakter[0].attack;
+        charDefault.defense = karakter[0].defense;
+        dataUserSekarang.characters.push_back(charDefault);
     }
     
-    allUserData.push_back(currentUserData);
+    dataUser.push_back(dataUserSekarang);
     simpanUserData();
 }
 
@@ -395,12 +393,12 @@ void tambahMusuh() {
             throw runtime_error("Data musuh penuh! Maksimal: " + to_string(maks_musuh));
         }
         
-        Enemy newEnemy;
+        Enemy musuhBaru;
         cout << "=== Tambah Musuh ===";
         cout << "\n\nNama Musuh: ";
-        getline(cin >> ws, newEnemy.nama);
+        getline(cin >> ws, musuhBaru.nama);
 
-        if (newEnemy.nama.length() > 15) {
+        if (musuhBaru.nama.length() > 15) {
             cout << "[ERROR] Nama terlalu panjang! Maksimal 15 karakter.\n";
             enter();
             return;
@@ -409,7 +407,7 @@ void tambahMusuh() {
         // Cek duplikasi nama
         try {
             for (int i = 0; i < jumlahMusuh; i++) {
-                if (musuh[i].nama == newEnemy.nama) {
+                if (musuh[i].nama == musuhBaru.nama) {
                     throw runtime_error("Nama musuh sudah digunakan!");
                 }
             }
@@ -422,7 +420,7 @@ void tambahMusuh() {
         // Input Attack
         cout << "Attack: ";
         try {
-            if (!(cin >> newEnemy.attack) || newEnemy.attack < 0) {
+            if (!(cin >> musuhBaru.attack) || musuhBaru.attack < 0) {
                 throw runtime_error("Attack harus angka >= 0!");
             }
         } catch (const runtime_error& e) {
@@ -436,7 +434,7 @@ void tambahMusuh() {
         // Input Health
         cout << "Health: ";
         try {
-            if (!(cin >> newEnemy.health) || newEnemy.health < 0) {
+            if (!(cin >> musuhBaru.health) || musuhBaru.health < 0) {
                 throw runtime_error("Health harus angka >= 0!");
             }
         } catch (const runtime_error& e) {
@@ -450,7 +448,7 @@ void tambahMusuh() {
         // Input Defense
         cout << "Defense: ";
         try {
-            if (!(cin >> newEnemy.defense) || newEnemy.defense < 0) {
+            if (!(cin >> musuhBaru.defense) || musuhBaru.defense < 0) {
                 throw runtime_error("Defense harus angka >= 0!");
             }
         } catch (const runtime_error& e) {
@@ -463,7 +461,7 @@ void tambahMusuh() {
 
         bersihkanBuffer();
 
-        musuh[jumlahMusuh++] = newEnemy;
+        musuh[jumlahMusuh++] = musuhBaru;
         simpanMusuhKeCSV();
         cout << "\nMusuh berhasil ditambahkan!\n";
         enter();
@@ -484,7 +482,7 @@ void tampilkanDaftarMusuhCRUD() {
     system("cls");
     cout << "\n==================== Daftar Musuh ====================\n" << endl;
     cout << left << setw(5) << "No" 
-         << setw(19) << "Nama"
+         << setw(20) << "Nama"
          << setw(10) << "Attack"
          << setw(10) << "Health"
          << setw(10) << "Defense" << endl;
@@ -492,7 +490,7 @@ void tampilkanDaftarMusuhCRUD() {
 
     for (int i = 0; i < jumlahMusuh; i++) {
         cout << left << setw(5) << i+1
-             << setw(19) << musuh[i].nama
+             << setw(20) << musuh[i].nama
              << setw(10) << musuh[i].attack 
              << setw(10) << musuh[i].health
              << setw(10) << musuh[i].defense << endl;
@@ -555,7 +553,7 @@ void tampilkanMusuh() {
             cout << "------------------------------------------------------------\n";
             for (int i = 0; i < jumlahMusuh; i++) {
                 cout << left << setw(5) << i+1
-                     << setw(15) << sortedMusuh[i].nama
+                     << setw(20) << sortedMusuh[i].nama
                      << setw(10) << sortedMusuh[i].attack 
                      << setw(10) << sortedMusuh[i].health
                      << setw(10) << sortedMusuh[i].defense << endl;
@@ -568,7 +566,7 @@ void tampilkanMusuh() {
     } while (pilihan != 3);
 }
 
-void ubahMusuh(int startIndex = 0) {
+void ubahMusuh(int startindeks = 0) {
     try {
         if (jumlahMusuh == 0) {
             cout << "Tidak ada karakter yang tersimpan.\n";
@@ -579,14 +577,14 @@ void ubahMusuh(int startIndex = 0) {
         // Tampilkan daftar karakter
         tampilkanDaftarMusuhCRUD();
 
-        int index;
+        int indeks;
         cout << "\nMasukkan nomor musuh yang ingin diubah: ";
         try {
-            if (!(cin >> index) || index < startIndex + 1 || index > jumlahMusuh) {
+            if (!(cin >> indeks) || indeks < startindeks + 1 || indeks > jumlahMusuh) {
                 throw runtime_error("Nomor tidak valid!");
             }
 
-            index--; 
+            indeks--; 
         } catch (const runtime_error& e) {
             cout << "[ERROR] " << e.what() << endl;
             cin.clear();
@@ -597,9 +595,8 @@ void ubahMusuh(int startIndex = 0) {
 
         bersihkanBuffer();
 
-        Enemy tempEnemy = musuh[index]; // Salin data lama
+        Enemy tempEnemy = musuh[indeks]; // Salin data lama
 
-        // Input nama baru
         cout << "Nama Baru: ";
         getline(cin >> ws, tempEnemy.nama);
 
@@ -612,7 +609,7 @@ void ubahMusuh(int startIndex = 0) {
         // Cek duplikasi nama (selain dirinya sendiri)
         try {
             for (int i = 0; i < jumlahMusuh; i++) {
-                if (i != index && musuh[i].nama == tempEnemy.nama) {
+                if (i != indeks && musuh[i].nama == tempEnemy.nama) {
                     throw runtime_error("Nama sudah digunakan oleh musuh lain!");
                 }
             }
@@ -622,7 +619,6 @@ void ubahMusuh(int startIndex = 0) {
             return;
         }
 
-        // Input Attack
         cout << "Attack Baru: ";
         try {
             if (!(cin >> tempEnemy.attack) || tempEnemy.attack < 0) {
@@ -637,7 +633,6 @@ void ubahMusuh(int startIndex = 0) {
             return;
         }
 
-        // Input Health
         cout << "Health Baru: ";
         try {
             if (!(cin >> tempEnemy.health) || tempEnemy.health < 0) {
@@ -651,7 +646,6 @@ void ubahMusuh(int startIndex = 0) {
             return;
         }
 
-        // Input Defense
         cout << "Defense Baru: ";
         try {
             if (!(cin >> tempEnemy.defense) || tempEnemy.defense < 0) {
@@ -666,7 +660,7 @@ void ubahMusuh(int startIndex = 0) {
         }
 
         // Semua input valid → simpan ke musuh
-        musuh[index] = tempEnemy;
+        musuh[indeks] = tempEnemy;
         simpanMusuhKeCSV();
         cout << "Musuh berhasil diubah!\n";
         cin.clear();
@@ -680,7 +674,7 @@ void ubahMusuh(int startIndex = 0) {
     }
 }
 
-void hapusMusuh(bool confirm = false, int index = -1) {
+void hapusMusuh(bool confirm = false, int indeks = -1) {
     if (jumlahMusuh == 0) {
         cout << "Tidak ada musuh yang tersimpan.\n";
         enter();
@@ -693,7 +687,7 @@ void hapusMusuh(bool confirm = false, int index = -1) {
             
             cout << "\nMasukkan nomor musuh yang ingin dihapus: ";
             try {
-                if (!(cin >> index) || index < 1 || index > jumlahMusuh) {
+                if (!(cin >> indeks) || indeks < 1 || indeks > jumlahMusuh) {
                     throw runtime_error("Nomor tidak valid!");
                 }
 
@@ -704,14 +698,14 @@ void hapusMusuh(bool confirm = false, int index = -1) {
                 enter(); 
                 return;
             }
-            index--;
+            indeks--;
 
-            cout << "Apakah Anda yakin ingin menghapus " << musuh[index].nama << "? (y/n): ";
-            char choice;
-            cin >> choice;
+            cout << "Apakah Anda yakin ingin menghapus " << musuh[indeks].nama << "? (y/n): ";
+            char pilih;
+            cin >> pilih;
 
-            if (choice == 'y' || choice == 'Y') {
-                hapusMusuh(true, index);
+            if (pilih == 'y' || pilih == 'Y') {
+                hapusMusuh(true, indeks);
             } else {
                 cout << "Penghapusan dibatalkan.\n";
                 cin.clear();
@@ -721,7 +715,7 @@ void hapusMusuh(bool confirm = false, int index = -1) {
             }
         } else {
             // Proses penghapusan
-            for (int i = index; i < jumlahMusuh - 1; i++) {
+            for (int i = indeks; i < jumlahMusuh - 1; i++) {
                 musuh[i] = musuh[i + 1];
             }
             jumlahMusuh--;
@@ -749,10 +743,10 @@ void printKarakterDetail(const Karakter *karakterPtr) {
 }
 
 // Fungsi dengan parameter address-of
-void updateHealth(Karakter &karakterRef, int newHealth) {
+void updateHealth(Karakter &karakterRef, int healthBaru) {
     try {
-        if (newHealth < 0) throw runtime_error("Health tidak boleh negatif!");
-        karakterRef.health = newHealth;
+        if (healthBaru < 0) throw runtime_error("Health tidak boleh negatif!");
+        karakterRef.health = healthBaru;
     } catch (const exception& e) {
         cerr << "[ERROR] " << e.what() << endl;
     }
@@ -887,7 +881,6 @@ void login(int maks_percobaan = maks_attempt) {
 
             cin.ignore(numeric_limits<streamsize>::max(), '\n');
             
-             // Cek admin khusus
             if (username == "demonia" && password == "utakatik") {
                 is_login = true;
                 userSekarang = username;
@@ -897,12 +890,12 @@ void login(int maks_percobaan = maks_attempt) {
             }
 
             bool found = false;
-            for (const auto& user : allUserData) {
+            for (const auto& user : dataUser) {
                 if (user.username == username && user.password == password) {
                     found = true;
                     is_login = true;
                     userSekarang = username;
-                    loadCurrentUserData(); 
+                    loaddataUserSekarang(); 
                     cout << "Login berhasil!\n";
                     return;
                 }
@@ -936,11 +929,32 @@ void registrasi(int maxUsers = maks_user) {
         }
 
         // Cek duplikasi username
-        for (const auto& user : allUserData) {
-            if (user.username == username) {
-                throw runtime_error("Username sudah digunakan!");
+        try {
+            for (const auto& user : dataUser) {
+                if (user.username == username) {
+                    throw runtime_error("Username sudah digunakan!");
+                }
             }
+        } catch (const runtime_error& e) {
+            cout << "[ERROR] " << e.what() << endl;
+            bersihkanBuffer();
+            enter();
+            return; 
         }
+
+        try {
+            for (int i = 0; i < jumlahUser; i++) {
+                if (users[i].username == username) {
+                    throw runtime_error("Username sudah digunakan");
+                }
+            }
+        } catch (const runtime_error& e) {
+            cout << "[ERROR] " << e.what() << endl;
+            bersihkanBuffer();
+            enter(); 
+            return; 
+        }
+
 
         cout << "Password: ";
         if (!(cin >> password) || password.empty()) {
@@ -950,22 +964,22 @@ void registrasi(int maxUsers = maks_user) {
         cin.ignore(numeric_limits<streamsize>::max(), '\n');
 
         // Buat user baru
-        UserData newUser;
-        newUser.username = username;
-        newUser.password = password;
-        newUser.coins = 0;
+        UserData userBaru;
+        userBaru.username = username;
+        userBaru.password = password;
+        userBaru.coins = 0;
         
         // Tambahkan karakter default jika ada
         if (jumlahKarakter > 0) {
-            UserCharacter defaultChar;
-            defaultChar.nama = karakter[0].nama;
-            defaultChar.health = karakter[0].health;
-            defaultChar.attack = karakter[0].attack;
-            defaultChar.defense = karakter[0].defense;
-            newUser.characters.push_back(defaultChar);
+            UserCharacter charDefault;
+            charDefault.nama = karakter[0].nama;
+            charDefault.health = karakter[0].health;
+            charDefault.attack = karakter[0].attack;
+            charDefault.defense = karakter[0].defense;
+            userBaru.characters.push_back(charDefault);
         }
         
-        allUserData.push_back(newUser);
+        dataUser.push_back(userBaru);
         simpanUserData();
 
         cout << "Registrasi berhasil! Silakan login.\n";
@@ -978,10 +992,10 @@ void registrasi(int maxUsers = maks_user) {
 
 // ===================== CHARACTER FUNCTION ===================== 
 
-void tambahKarakter(int maxCharacters = maks_karakter) {
+void tambahKarakter(int maksKarakter = maks_karakter) {
     try {
-        if (jumlahKarakter >= maxCharacters) {
-            throw runtime_error("Data karakter penuh! Maksimal: " + to_string(maxCharacters));
+        if (jumlahKarakter >= maksKarakter) {
+            throw runtime_error("Data karakter penuh! Maksimal: " + to_string(maksKarakter));
         }
 
         Karakter newKarakter;
@@ -1060,7 +1074,7 @@ void tampilkanKarakterCRUD(){
     system("cls");
     cout << "\n==================== Daftar Karakter ====================\n"<< endl;
         cout << left << setw(5) << "No" 
-             << setw(19) << "Nama"
+             << setw(20) << "Nama"
              << setw(10) << "Attack"
              << setw(10) << "Health"
              << setw(10) << "Defense" << endl;
@@ -1068,7 +1082,7 @@ void tampilkanKarakterCRUD(){
 
         for (int i = 0; i < jumlahKarakter; i++) {
             cout << left << setw(5) << i+1
-                 << setw(19) << karakter[i].nama
+                 << setw(20) << karakter[i].nama
                  << setw(10) << karakter[i].attack 
                  << setw(10) << karakter[i].health
                  << setw(10) << karakter[i].defense << endl;
@@ -1140,7 +1154,7 @@ void tampilkanKarakter(bool detailed = false) {
             // Tampilkan hasil sorting
             cout << "\n==================== Daftar Karakter (Sorted) ====================\n"<< endl;
             cout << left << setw(5) << "No" 
-                << setw(15) << "Nama"
+                << setw(20) << "Nama"
                 << setw(10) << "Attack"
                 << setw(10) << "Health"
                 << setw(10) << "Defense" << endl;
@@ -1148,7 +1162,7 @@ void tampilkanKarakter(bool detailed = false) {
 
             for (int i = 0; i < jumlahKarakter; i++) {
                 cout << left << setw(5) << i+1
-                    << setw(15) << sortedKarakter[i].nama
+                    << setw(20) << sortedKarakter[i].nama
                     << setw(10) << sortedKarakter[i].attack 
                     << setw(10) << sortedKarakter[i].health
                     << setw(10) << sortedKarakter[i].defense << endl;
@@ -1163,7 +1177,7 @@ void tampilkanKarakter(bool detailed = false) {
     } while (pilihan != 3);
 }
 
-void ubahKarakter(int startIndex = 0) {
+void ubahKarakter(int startindeks = 0) {
     try {
         if (jumlahKarakter == 0) {
             cout << "Tidak ada karakter yang tersimpan.\n";
@@ -1174,14 +1188,14 @@ void ubahKarakter(int startIndex = 0) {
         // Tampilkan daftar karakter
         tampilkanKarakterCRUD();
 
-        int index;
+        int indeks;
         cout << "Masukkan nomor karakter yang ingin diubah: ";
 
         try {
-            if (!(cin >> index) || index < startIndex + 1 || index > jumlahKarakter) {
+            if (!(cin >> indeks) || indeks < startindeks + 1 || indeks > jumlahKarakter) {
                 throw runtime_error("Nomor tidak valid!");
             }
-            index--;
+            indeks--;
         } catch (const runtime_error& e) {
             cout << "[ERROR] " << e.what() << endl;
             cin.clear();         // Reset status error input
@@ -1201,25 +1215,23 @@ void ubahKarakter(int startIndex = 0) {
             return;
         }
 
-        // Cek duplikasi nama (kecuali untuk dirinya sendiri)
         try {
             for (int i = 0; i < jumlahKarakter; i++) {
-                if (i != index && karakter[i].nama == namaBaru) {
+                if (i != indeks && karakter[i].nama == namaBaru) {
                     throw runtime_error("Nama sudah digunakan oleh karakter lain!");
                 }
             }
         } catch (const runtime_error& e) {
             cout << "[ERROR] " << e.what() << endl;
             cin.clear();
-            enter();  // atau bisa return langsung, tergantung logika program kamu
             return;
         }
 
-        karakter[index].nama = namaBaru;
+        karakter[indeks].nama = namaBaru;
 
         cout << "Attack Baru: ";
         try {
-            if (!(cin >> karakter[index].attack) || karakter[index].attack < 0) {
+            if (!(cin >> karakter[indeks].attack) || karakter[indeks].attack < 0) {
                 throw runtime_error("\nAttack harus angka >= 0!");
             }
         } catch (const runtime_error& e) {
@@ -1232,7 +1244,7 @@ void ubahKarakter(int startIndex = 0) {
 
         cout << "Health Baru: ";
         try {
-            if (!(cin >> karakter[index].health) || karakter[index].health < 0) {
+            if (!(cin >> karakter[indeks].health) || karakter[indeks].health < 0) {
                 throw runtime_error("\nHealth harus angka >= 0!");
             }
         } catch (const runtime_error& e) {
@@ -1245,7 +1257,7 @@ void ubahKarakter(int startIndex = 0) {
 
         cout << "Defense Baru: ";
         try {
-            if (!(cin >> karakter[index].defense) || karakter[index].defense < 0) {
+            if (!(cin >> karakter[indeks].defense) || karakter[indeks].defense < 0) {
                 throw runtime_error("\nDefense harus angka >= 0!");
             }
         } catch (const runtime_error& e) {
@@ -1269,7 +1281,7 @@ void ubahKarakter(int startIndex = 0) {
     }
 }
 
-void hapusKarakter(bool confirm = false, int index = -1) {
+void hapusKarakter(bool confirm = false, int indeks = -1) {
     if (jumlahKarakter == 0) {
         cout << "Tidak ada karakter yang tersimpan.\n";
         enter();
@@ -1282,7 +1294,7 @@ void hapusKarakter(bool confirm = false, int index = -1) {
             
             cout << "Masukkan nomor karakter yang ingin dihapus: ";
             try {
-                if (!(cin >> index) || index < 1 || index > jumlahKarakter) {
+                if (!(cin >> indeks) || indeks < 1 || indeks > jumlahKarakter) {
                     throw runtime_error("Nomor tidak valid!");
                 }
             } catch (const exception& e) {
@@ -1292,16 +1304,16 @@ void hapusKarakter(bool confirm = false, int index = -1) {
                 enter();
                 return;
             }
-            index--;
+            indeks--;
 
-            cout << "Apakah Anda yakin ingin menghapus " << karakter[index].nama << "? (y/n): ";
-            char choice;
-            cin >> choice;
+            cout << "Apakah Anda yakin ingin menghapus " << karakter[indeks].nama << "? (y/n): ";
+            char pilih;
+            cin >> pilih;
             cin.clear();
             bersihkanBuffer();
 
-            if (choice == 'y' || choice == 'Y') {
-                hapusKarakter(true, index);
+            if (pilih == 'y' || pilih == 'Y') {
+                hapusKarakter(true, indeks);
             } else {
                 cout << "Penghapusan dibatalkan.\n";
                 enter();
@@ -1309,7 +1321,7 @@ void hapusKarakter(bool confirm = false, int index = -1) {
             }
         } else {
             // Proses penghapusan
-            for (int i = index; i < jumlahKarakter - 1; i++) {
+            for (int i = indeks; i < jumlahKarakter - 1; i++) {
                 karakter[i] = karakter[i + 1];
             }
             jumlahKarakter--;
@@ -1330,16 +1342,19 @@ void linearSearchKarakter(const string& nama) {
     try {
         if (jumlahKarakter == 0) throw runtime_error("Tidak ada karakter yang tersimpan!");
         
+        system("cls");
         bool found = false;
         cout << "\n=== HASIL PENCARIAN KARAKTER ===" << endl;
         cout << "------------------------------------------------------------" << endl;
-        cout << left << setw(15) << "Nama" << setw(10) << "Attack" 
-             << setw(10) << "Health" << setw(10) << "Defense" << endl;
+        cout << left << setw(20) << "Nama" 
+             << setw(10) << "Attack" 
+             << setw(10) << "Health" 
+             << setw(10) << "Defense" << endl;
         cout << "------------------------------------------------------------" << endl;
         
         for (int i = 0; i < jumlahKarakter; i++) {
             if (karakter[i].nama.find(nama) != string::npos) {
-                cout << left << setw(15) << karakter[i].nama 
+                cout << left << setw(20) << karakter[i].nama 
                      << setw(10) << karakter[i].attack
                      << setw(10) << karakter[i].health
                      << setw(10) << karakter[i].defense << endl;
@@ -1347,10 +1362,15 @@ void linearSearchKarakter(const string& nama) {
             }
         }
         
+        
         if (!found) {
             cout << "Tidak ditemukan karakter dengan nama mengandung '" << nama << "'" << endl;
         }
         cout << "------------------------------------------------------------" << endl;
+
+        cin.clear();
+        enter();
+        
     } catch (const exception& e) {
         cerr << "[ERROR] " << e.what() << endl;
     }
@@ -1361,16 +1381,17 @@ void linearSearchMusuh(const string& nama) {
     try {
         if (jumlahMusuh == 0) throw runtime_error("Tidak ada musuh yang tersimpan!");
         
+        system("cls");
         bool found = false;
         cout << "\n=== HASIL PENCARIAN MUSUH ===" << endl;
         cout << "------------------------------------------------------------" << endl;
-        cout << left << setw(15) << "Nama" << setw(10) << "Attack" 
+        cout << left << setw(20) << "Nama" << setw(10) << "Attack" 
              << setw(10) << "Health" << setw(10) << "Defense" << endl;
         cout << "------------------------------------------------------------" << endl;
         
         for (int i = 0; i < jumlahMusuh; i++) {
             if (musuh[i].nama.find(nama) != string::npos) {
-                cout << left << setw(15) << musuh[i].nama 
+                cout << left << setw(20) << musuh[i].nama 
                      << setw(10) << musuh[i].attack
                      << setw(10) << musuh[i].health
                      << setw(10) << musuh[i].defense << endl;
@@ -1382,13 +1403,15 @@ void linearSearchMusuh(const string& nama) {
             cout << "Tidak ditemukan musuh dengan nama mengandung '" << nama << "'" << endl;
         }
         cout << "------------------------------------------------------------" << endl;
+
+        enter();
     } catch (const exception& e) {
         cerr << "[ERROR] " << e.what() << endl;
     }
 }
 
 // Binary Search untuk Karakter (bisa untuk attack, health, atau defense)
-void binarySearchKarakter(int searchValue, SearchType type) {
+void binarySearchKarakter(int searchnilai, SearchType type) {
     try {
         if (jumlahKarakter == 0) throw runtime_error("Tidak ada karakter yang tersimpan!");
         
@@ -1401,32 +1424,34 @@ void binarySearchKarakter(int searchValue, SearchType type) {
         int high = jumlahKarakter - 1;
         bool found = false;
         
-        string searchField;
+        string kolomPencarian;
         switch(type) {
-            case ATTACK: searchField = "Attack"; break;
-            case HEALTH: searchField = "Health"; break;
-            case DEFENSE: searchField = "Defense"; break;
+            case ATTACK: kolomPencarian = "Attack"; break;
+            case HEALTH: kolomPencarian = "Health"; break;
+            case DEFENSE: kolomPencarian = "Defense"; break;
         }
-        
-        cout << "\n=== HASIL PENCARIAN KARAKTER (Binary Search - " << searchField << ": " << searchValue << ") ===" << endl;
+
+        system("cls"); 
+
+        cout << "\n=== HASIL PENCARIAN KARAKTER (Binary Search - " << kolomPencarian << ": " << searchnilai << ") ===" << endl;
         cout << "------------------------------------------------------------" << endl;
-        cout << left << setw(15) << "Nama" << setw(10) << "Attack" 
+        cout << left << setw(20) << "Nama" << setw(10) << "Attack" 
              << setw(10) << "Health" << setw(10) << "Defense" << endl;
         cout << "------------------------------------------------------------" << endl;
         
         while (low <= high) {
             int mid = low + (high - low) / 2;
-            int currentValue;
+            int currentnilai;
             
             switch(type) {
-                case ATTACK: currentValue = sortedKarakter[mid].attack; break;
-                case HEALTH: currentValue = sortedKarakter[mid].health; break;
-                case DEFENSE: currentValue = sortedKarakter[mid].defense; break;
+                case ATTACK: currentnilai = sortedKarakter[mid].attack; break;
+                case HEALTH: currentnilai = sortedKarakter[mid].health; break;
+                case DEFENSE: currentnilai = sortedKarakter[mid].defense; break;
             }
             
-            if (currentValue == searchValue) {
+            if (currentnilai == searchnilai) {
                 // Tampilkan hanya yang nilainya sama persis
-                cout << left << setw(15) << sortedKarakter[mid].nama 
+                cout << left << setw(20) << sortedKarakter[mid].nama 
                      << setw(10) << sortedKarakter[mid].attack
                      << setw(10) << sortedKarakter[mid].health
                      << setw(10) << sortedKarakter[mid].defense << endl;
@@ -1436,12 +1461,12 @@ void binarySearchKarakter(int searchValue, SearchType type) {
                 int left = mid - 1;
                 while (left >= 0) {
                     switch(type) {
-                        case ATTACK: currentValue = sortedKarakter[left].attack; break;
-                        case HEALTH: currentValue = sortedKarakter[left].health; break;
-                        case DEFENSE: currentValue = sortedKarakter[left].defense; break;
+                        case ATTACK: currentnilai = sortedKarakter[left].attack; break;
+                        case HEALTH: currentnilai = sortedKarakter[left].health; break;
+                        case DEFENSE: currentnilai = sortedKarakter[left].defense; break;
                     }
-                    if (currentValue == searchValue) {
-                        cout << left << setw(15) << sortedKarakter[left].nama 
+                    if (currentnilai == searchnilai) {
+                        cout << left << setw(20) << sortedKarakter[left].nama 
                              << setw(10) << sortedKarakter[left].attack
                              << setw(10) << sortedKarakter[left].health
                              << setw(10) << sortedKarakter[left].defense << endl;
@@ -1455,12 +1480,12 @@ void binarySearchKarakter(int searchValue, SearchType type) {
                 int right = mid + 1;
                 while (right < jumlahKarakter) {
                     switch(type) {
-                        case ATTACK: currentValue = sortedKarakter[right].attack; break;
-                        case HEALTH: currentValue = sortedKarakter[right].health; break;
-                        case DEFENSE: currentValue = sortedKarakter[right].defense; break;
+                        case ATTACK: currentnilai = sortedKarakter[right].attack; break;
+                        case HEALTH: currentnilai = sortedKarakter[right].health; break;
+                        case DEFENSE: currentnilai = sortedKarakter[right].defense; break;
                     }
-                    if (currentValue == searchValue) {
-                        cout << left << setw(15) << sortedKarakter[right].nama 
+                    if (currentnilai == searchnilai) {
+                        cout << left << setw(20) << sortedKarakter[right].nama 
                              << setw(10) << sortedKarakter[right].attack
                              << setw(10) << sortedKarakter[right].health
                              << setw(10) << sortedKarakter[right].defense << endl;
@@ -1472,7 +1497,7 @@ void binarySearchKarakter(int searchValue, SearchType type) {
                 break;
             }
             
-            if (currentValue < searchValue) {
+            if (currentnilai < searchnilai) {
                 high = mid - 1;
             } else {
                 low = mid + 1;
@@ -1480,16 +1505,18 @@ void binarySearchKarakter(int searchValue, SearchType type) {
         }
         
         if (!found) {
-            cout << "Tidak ditemukan karakter dengan " << searchField << " = " << searchValue << endl;
+            cout << "Tidak ditemukan karakter dengan " << kolomPencarian << " = " << searchnilai << endl;
         }
         cout << "------------------------------------------------------------" << endl;
+
+        enter();
     } catch (const exception& e) {
         cerr << "[ERROR] " << e.what() << endl;
     }
 }
 
 // Binary Search untuk Musuh (bisa untuk attack, health, atau defense)
-void binarySearchMusuh(int searchValue, SearchType type) {
+void binarySearchMusuh(int searchnilai, SearchType type) {
     try {
         if (jumlahMusuh == 0) throw runtime_error("Tidak ada musuh yang tersimpan!");
         
@@ -1524,39 +1551,40 @@ void binarySearchMusuh(int searchValue, SearchType type) {
         int high = jumlahMusuh - 1;
         bool found = false;
         
-        string searchField;
+        string kolomPencarian;
         switch(type) {
-            case ATTACK: searchField = "Attack"; break;
-            case HEALTH: searchField = "Health"; break;
-            case DEFENSE: searchField = "Defense"; break;
+            case ATTACK: kolomPencarian = "Attack"; break;
+            case HEALTH: kolomPencarian = "Health"; break;
+            case DEFENSE: kolomPencarian = "Defense"; break;
         }
         
-        cout << "\n=== HASIL PENCARIAN MUSUH (Binary Search - " << searchField << ": " << searchValue << ") ===" << endl;
+        system("cls");
+        cout << "\n=== HASIL PENCARIAN MUSUH (Binary Search - " << kolomPencarian << ": " << searchnilai << ") ===" << endl;
         cout << "------------------------------------------------------------" << endl;
-        cout << left << setw(15) << "Nama" << setw(10) << "Attack" 
+        cout << left << setw(20) << "Nama" << setw(10) << "Attack" 
              << setw(10) << "Health" << setw(10) << "Defense" << endl;
         cout << "------------------------------------------------------------" << endl;
         
         while (low <= high) {
             int mid = low + (high - low) / 2;
-            int currentValue;
+            int currentnilai;
             
             switch(type) {
-                case ATTACK: currentValue = sortedMusuh[mid].attack; break;
-                case HEALTH: currentValue = sortedMusuh[mid].health; break;
-                case DEFENSE: currentValue = sortedMusuh[mid].defense; break;
+                case ATTACK: currentnilai = sortedMusuh[mid].attack; break;
+                case HEALTH: currentnilai = sortedMusuh[mid].health; break;
+                case DEFENSE: currentnilai = sortedMusuh[mid].defense; break;
             }
             
-            if (currentValue == searchValue) {
+            if (currentnilai == searchnilai) {
                 // Tampilkan semua yang sama
                 int temp = mid;
                 while (temp >= 0) {
                     switch(type) {
-                        case ATTACK: if (sortedMusuh[temp].attack != searchValue) break; break;
-                        case HEALTH: if (sortedMusuh[temp].health != searchValue) break; break;
-                        case DEFENSE: if (sortedMusuh[temp].defense != searchValue) break; break;
+                        case ATTACK: if (sortedMusuh[temp].attack != searchnilai) break; break;
+                        case HEALTH: if (sortedMusuh[temp].health != searchnilai) break; break;
+                        case DEFENSE: if (sortedMusuh[temp].defense != searchnilai) break; break;
                     }
-                    cout << left << setw(15) << sortedMusuh[temp].nama 
+                    cout << left << setw(20) << sortedMusuh[temp].nama 
                          << setw(10) << sortedMusuh[temp].attack
                          << setw(10) << sortedMusuh[temp].health
                          << setw(10) << sortedMusuh[temp].defense << endl;
@@ -1566,11 +1594,11 @@ void binarySearchMusuh(int searchValue, SearchType type) {
                 temp = mid + 1;
                 while (temp < jumlahMusuh) {
                     switch(type) {
-                        case ATTACK: if (sortedMusuh[temp].attack != searchValue) break; break;
-                        case HEALTH: if (sortedMusuh[temp].health != searchValue) break; break;
-                        case DEFENSE: if (sortedMusuh[temp].defense != searchValue) break; break;
+                        case ATTACK: if (sortedMusuh[temp].attack != searchnilai) break; break;
+                        case HEALTH: if (sortedMusuh[temp].health != searchnilai) break; break;
+                        case DEFENSE: if (sortedMusuh[temp].defense != searchnilai) break; break;
                     }
-                    cout << left << setw(15) << sortedMusuh[temp].nama 
+                    cout << left << setw(20) << sortedMusuh[temp].nama 
                          << setw(10) << sortedMusuh[temp].attack
                          << setw(10) << sortedMusuh[temp].health
                          << setw(10) << sortedMusuh[temp].defense << endl;
@@ -1580,7 +1608,7 @@ void binarySearchMusuh(int searchValue, SearchType type) {
                 break;
             }
             
-            if (currentValue < searchValue) {
+            if (currentnilai < searchnilai) {
                 high = mid - 1;
             } else {
                 low = mid + 1;
@@ -1588,17 +1616,21 @@ void binarySearchMusuh(int searchValue, SearchType type) {
         }
         
         if (!found) {
-            cout << "Tidak ditemukan musuh dengan " << searchField << " = " << searchValue << endl;
+            cout << "Tidak ditemukan musuh dengan " << kolomPencarian << " = " << searchnilai << endl;
         }
         cout << "------------------------------------------------------------" << endl;
+        enter();
+
     } catch (const exception& e) {
         cerr << "[ERROR] " << e.what() << endl;
     }
 }
 
 void menuSearchKarakter() {
-    int searchMethod;
+    int metodeSearch;
     string input;
+    tampilkanKarakterCRUD();
+    
     cout << "\n=== PENCARIAN KARAKTER ===" << endl;
     cout << "1. Cari berdasarkan Nama (Linear Search)" << endl;
     cout << "2. Cari berdasarkan Attack (Binary Search)" << endl;
@@ -1608,47 +1640,53 @@ void menuSearchKarakter() {
     cout << "Pilihan: ";
     getline(cin, input);
 
-    if (!ScanInput(input, searchMethod)) {
+    if (!ScanInput(input, metodeSearch)) {
         cout << "Input tidak valid! Masukkan angka antara 1-5." << endl;
+        enter();
         return;
     }
     
-    if (searchMethod == 1) {
+    if (metodeSearch == 1) {
         string nama;
         cout << "Masukkan nama (atau bagian nama) yang dicari: ";
         getline(cin, nama);
         linearSearchKarakter(nama);
-    } else if (searchMethod >= 2 && searchMethod <= 4) {
-        int value;
-        string field, valueInput;
-        switch(searchMethod) {
-            case 2: field = "attack"; break;
-            case 3: field = "health"; break;
-            case 4: field = "defense"; break;
+    } else if (metodeSearch >= 2 && metodeSearch <= 4) {
+        int nilai;
+        string kolom, nilaiInput;
+        switch(metodeSearch) {
+            case 2: kolom = "attack"; break;
+            case 3: kolom = "health"; break;
+            case 4: kolom = "defense"; break;
         }
-        cout << "Masukkan nilai " << field << " yang dicari: ";
-        getline(cin, valueInput);
+        cout << "Masukkan nilai " << kolom << " yang dicari: ";
+        getline(cin, nilaiInput);
 
-        if (!ScanInput(valueInput, value)) {
-            cout << "Input tidak valid! Masukkan angka untuk " << field << "." << endl;
+        if (!ScanInput(nilaiInput, nilai)) {
+            cout << "Input tidak valid! Masukkan angka untuk " << kolom << "." << endl;
+            enter();
             return;
         }
         
         SearchType type;
-        switch(searchMethod) {
+        switch(metodeSearch) {
             case 2: type = ATTACK; break;
             case 3: type = HEALTH; break;
             case 4: type = DEFENSE; break;
         }
-        binarySearchKarakter(value, type);
-    } else if (searchMethod != 5) {
+        binarySearchKarakter(nilai, type);
+    } else if (metodeSearch != 5) {
         cout << "Pilihan tidak valid! Masukkan angka antara 1-5." << endl;
+        enter();
     }
 }
 
 void menuSearchMusuh() {
-    int searchMethod;
+    int metodeSearch;
     string input;
+    system("cls");
+    tampilkanDaftarMusuhCRUD();
+
     cout << "\n=== PENCARIAN MUSUH ===" << endl;
     cout << "1. Cari berdasarkan Nama (Linear Search)" << endl;
     cout << "2. Cari berdasarkan Attack (Binary Search)" << endl;
@@ -1658,48 +1696,52 @@ void menuSearchMusuh() {
     cout << "Pilihan: ";
     getline(cin, input);
 
-    if (!ScanInput(input, searchMethod)) {
+    if (!ScanInput(input, metodeSearch)) {
         cout << "Input tidak valid! Masukkan angka antara 1-5." << endl;
+        enter();
         return;
     }
     
-    if (searchMethod == 1) {
+    if (metodeSearch == 1) {
         string nama;
         cout << "Masukkan nama (atau bagian nama) yang dicari: ";
         getline(cin, nama);
         linearSearchMusuh(nama);
-    } else if (searchMethod >= 2 && searchMethod <= 4) {
-        int value;
-        string field, valueInput;
-        switch(searchMethod) {
-            case 2: field = "attack"; break;
-            case 3: field = "health"; break;
-            case 4: field = "defense"; break;
+    } else if (metodeSearch >= 2 && metodeSearch <= 4) {
+        int nilai;
+        string kolom, nilaiInput;
+        switch(metodeSearch) {
+            case 2: kolom = "attack"; break;
+            case 3: kolom = "health"; break;
+            case 4: kolom = "defense"; break;
         }
-        cout << "Masukkan nilai " << field << " yang dicari: ";
-        getline(cin, valueInput);
+        cout << "Masukkan nilai " << kolom << " yang dicari: ";
+        getline(cin, nilaiInput);
 
-        if (!ScanInput(valueInput, value)) {
-            cout << "Input tidak valid! Masukkan angka untuk " << field << "." << endl;
+        if (!ScanInput(nilaiInput, nilai)) {
+            cout << "Input tidak valid! Masukkan angka untuk " << kolom << "." << endl;
+            enter();
             return;
         }
         
         SearchType type;
-        switch(searchMethod) {
+        switch(metodeSearch) {
             case 2: type = ATTACK; break;
             case 3: type = HEALTH; break;
             case 4: type = DEFENSE; break;
         }
-        binarySearchMusuh(value, type);
-    } else if (searchMethod != 5) {
+        binarySearchMusuh(nilai, type);
+    } else if (metodeSearch != 5) {
         cout << "Pilihan tidak valid! Masukkan angka antara 1-5." << endl;
+        enter();
     }
 }
 
 void menuSearch() {
-    int searchChoice;
+    int searchpilih;
     string input;
 
+    system("cls");
     cout << "\n=== MENU PENCARIAN ===" << endl;
     cout << "1. Cari Karakter" << endl;
     cout << "2. Cari Musuh" << endl;
@@ -1707,13 +1749,13 @@ void menuSearch() {
     cout << "Pilihan: ";
     getline(cin, input);
 
-    if (!ScanInput(input, searchChoice)) {
+    if (!ScanInput(input, searchpilih)) {
         cout << "Input tidak valid! Harap masukkan angka 1-3." << endl;
         enter();
         return;
     }
     
-    switch(searchChoice) {
+    switch(searchpilih) {
         case 1: 
             menuSearchKarakter();
             break;
@@ -1721,15 +1763,12 @@ void menuSearch() {
             menuSearchMusuh();
             break;
         case 3:
-            // Kembali ke menu sebelumnya
             break;
         default:
             cout << "Pilihan tidak valid! Harap masukkan angka 1-3." << endl;
             enter();
     }
 }
-
-// ===================== SUB MENU FUNCTION ===================== 
 
 // ===================== MENU KELOLA KARAKTER =====================
 void kelolaKarakter() {
@@ -1792,7 +1831,115 @@ void kelolaMusuh() {
             case 2: tampilkanMusuh(); break;
             case 3: ubahMusuh(); break;
             case 4: hapusMusuh(); break;
-            case 5: return; // Kembali ke menu admin
+            case 5: return; 
+            default:
+                cout << "Pilihan tidak valid!" << endl;
+        }
+    }
+}
+
+// ===================== USER MANAGEMENT FUNCTIONS =====================
+void tampilkanUser() {
+    if (dataUser.empty()) {
+        cout << "Tidak ada user yang tersimpan.\n";
+        enter();
+        return;
+    }
+
+    cout << "\n==================== Daftar User ====================\n"<< endl;
+    cout << left << setw(5) << "No" 
+         << setw(20) << "Username"
+         << setw(15) << "Password"
+         << setw(10) << "Coins"
+         << setw(15) << "Jumlah Karakter" << endl;
+    cout << "------------------------------------------------------------\n";
+
+    for (int i = 0; i < dataUser.size(); i++) {
+        cout << left << setw(5) << i+1
+             << setw(20) << dataUser[i].username
+             << setw(15) << dataUser[i].password
+             << setw(10) << dataUser[i].coins
+             << setw(15) << dataUser[i].characters.size() << endl;
+    }
+    cout << "------------------------------------------------------------\n";
+}
+
+void hapusUser() {
+    try {
+        if (dataUser.empty()) {
+            cout << "Tidak ada user yang tersimpan.\n";
+            enter();
+            return;
+        }
+
+        tampilkanUser();
+        
+        int index;
+        string input;
+        cout << "Masukkan nomor user yang ingin dihapus (0 untuk kembali): ";
+        getline(cin, input);
+        
+        if (!ScanInput(input, index)) {
+            throw runtime_error("Input tidak valid!");
+        }
+
+        if (index == 0) return; // Kembali jika memilih 0
+        
+        if (index < 1 || index > dataUser.size()) {
+            throw runtime_error("Nomor tidak valid!");
+        }
+        index--; // Konversi ke index 0-based
+
+        // Konfirmasi penghapusan
+        cout << "Apakah Anda yakin ingin menghapus user " << dataUser[index].username << "? (y/n): ";
+        char choice;
+        cin >> choice;
+        bersihkanBuffer();
+
+        if (choice == 'y' || choice == 'Y') {
+            // Jangan izinkan menghapus admin utama
+            if (dataUser[index].username == "demonia") {
+                throw runtime_error("Tidak bisa menghapus admin utama!");
+            }
+
+            // Hapus user dari vector
+            dataUser.erase(dataUser.begin() + index);
+            
+            // Simpan perubahan ke CSV
+            simpanUserData();
+            cout << "User berhasil dihapus!\n";
+        } else {
+            cout << "Penghapusan dibatalkan.\n";
+        }
+    } catch (const exception& e) {
+        cerr << "[ERROR] " << e.what() << endl;
+        cin.clear();
+        cin.ignore(1000, '\n');
+    }
+}
+
+void kelolaUser() {
+    int pilihan;
+    string input;
+    
+    while (true) {
+        cout << "\n=== KELOLA USER ===" << endl;
+        cout << "1. Tampilkan User" << endl;
+        cout << "2. Hapus User" << endl;
+        cout << "3. Kembali ke Menu Admin" << endl;
+        cout << "Pilihan: ";
+        getline(cin, input);
+
+        if (!ScanInput(input, pilihan)) {
+            cout << "Input tidak valid! Harap masukkan angka 1-3." << endl;
+            enter();
+            continue;
+        }
+
+        switch (pilihan) {
+            case 1: tampilkanUser(); break;
+            case 2: hapusUser(); break;
+            case 3: return; // Kembali ke menu admin
             default:
                 cout << "Pilihan tidak valid!" << endl;
         }
@@ -1800,9 +1947,256 @@ void kelolaMusuh() {
 }
 
 // ===================== BATTLE SYSTEM =====================
+void tampilkanStatusBattle(const UserCharacter& player, const Enemy& enemy, int turn) {
+    system("cls");
+    cout << "\n=== TURN " << turn << " ===" << endl;
+    cout << "----------------------------------------\n";
+    cout << "| " << left << setw(20) << player.nama << " vs " << setw(20) << enemy.nama << " |\n";
+    cout << "----------------------------------------\n";
+    cout << "| HEALTH: " << setw(5) << player.health << " | " << setw(5) << enemy.health << " |\n";
+    cout << "| ATTACK: " << setw(5) << player.attack << " | " << setw(5) << enemy.attack << " |\n";
+    cout << "| DEFENSE:" << setw(5) << player.defense << " | " << setw(5) << enemy.defense << " |\n";
+    cout << "----------------------------------------\n\n";
+}
 
+void battleWithEnemy() {
+    try {
+        if (dataUserSekarang.characters.empty()) {
+            throw runtime_error("Anda tidak memiliki karakter untuk bertarung!");
+        }
+
+        if (jumlahMusuh == 0) {
+            throw runtime_error("Tidak ada musuh yang tersedia untuk bertarung!");
+        }
+
+        // Pilih musuh acak
+        int randomEnemyindeks = rand() % jumlahMusuh;
+        Enemy enemy = musuh[randomEnemyindeks];
+        
+        system("cls");
+        cout << "\n=== ANDA AKAN MELAWAN ===\n";
+        cout << "Nama: " << enemy.nama << endl;
+        cout << "Health: " << enemy.health << endl;
+        cout << "Attack: " << enemy.attack << endl;
+        cout << "Defense: " << enemy.defense << endl;
+        cout << "--------------------------\n";
+
+        // Pilih karakter
+        cout << "\n==================== Pilih Karakter Anda ====================\n" << endl;
+        cout << left << setw(5) << "No" 
+            << setw(20) << "Nama"
+            << setw(10) << "HP"
+            << setw(10) << "ATK"
+            << setw(10) << "DEF" << endl;
+        cout << "------------------------------------------------------------\n";
+
+        for (int i = 0; i < dataUserSekarang.characters.size(); i++) {
+            const UserCharacter& c = dataUserSekarang.characters[i];
+            cout << left << setw(5) << i+1
+                << setw(20) << c.nama
+                << setw(10) << c.health
+                << setw(10) << c.attack
+                << setw(10) << c.defense << endl;
+        }
+        cout << "------------------------------------------------------------\n";
+        cout << "0. Kembali" << endl;
+        cout << "Pilihan: ";
+
+        int charpilih;
+        string input;
+        getline(cin, input);
+        
+        if (!ScanInput(input, charpilih)) {
+            throw runtime_error("Input tidak valid!");
+        }
+
+        if (charpilih == 0) return;
+        if (charpilih < 1 || charpilih > dataUserSekarang.characters.size()) {
+            throw runtime_error("Pilihan karakter tidak valid!");
+        }
+
+        UserCharacter player = dataUserSekarang.characters[charpilih-1];
+        UserCharacter originalPlayer = player; // Simpan stat awal
+        
+        // Battle loop
+        int turn = 1;
+        bool playerRan = false;
+        
+        while (player.health > 0 && enemy.health > 0) {
+            tampilkanStatusBattle(player, enemy, turn);
+            
+            // Player turn
+            cout << "1. Serang\n";
+            cout << "2. Kabur\n";
+            cout << "Pilihan: ";
+            
+            int battlepilih;
+            getline(cin, input);
+            if (!ScanInput(input, battlepilih)) {
+                cout << "Input tidak valid!\n";
+                bersihkanBuffer();
+                continue;
+            }
+            
+            if (battlepilih == 1) {
+                // Hitung damage player ke enemy
+                int damage = max(1, player.attack - enemy.defense/2);
+                enemy.health -= damage;
+                cout << "\n" << player.nama << " menyerang " << enemy.nama << " dengan damage " << damage << "!\n";
+                
+                if (enemy.health <= 0) {
+                    cout << enemy.nama << " dikalahkan!\n";
+                    break;
+                }
+            } 
+            else if (battlepilih == 2) {
+                // 70% chance untuk kabur berhasil
+                if (rand() % 10 < 7) {
+                    cout << "Anda berhasil kabur dari pertarungan!\n";
+                    playerRan = true;
+                    break;
+                } else {
+                    cout << "Gagal kabur!\n";
+                }
+            }
+            else {
+                cout << "Pilihan tidak valid!\n";
+                bersihkanBuffer();
+                continue;
+            }
+            
+            // Enemy turn (jika masih hidup)
+            if (enemy.health > 0) {
+                int damage = max(1, enemy.attack - player.defense/2);
+                player.health -= damage;
+                cout << enemy.nama << " menyerang " << player.nama << " dengan damage " << damage << "!\n";
+                
+                if (player.health <= 0) {
+                    cout << player.nama << " kalah dalam pertarungan!\n";
+                    break;
+                }
+            }
+
+            bersihkanBuffer();
+            
+            turn++;
+        }
+        
+        // Update karakter player
+        dataUserSekarang.characters[charpilih-1] = player;
+        
+        // Jika menang, dapatkan koin
+        if (enemy.health <= 0 && !playerRan) {
+            int coinsEarned = (enemy.attack + enemy.defense) / 2;
+            dataUserSekarang.coins += coinsEarned;
+            cout << "\nAnda memenangkan pertarungan! Mendapatkan " << coinsEarned << " koin.\n";
+            cout << "Total koin Anda sekarang: " << dataUserSekarang.coins << endl;
+        }
+        
+        // Simpan data user
+        for (auto& user : dataUser) {
+            if (user.username == userSekarang) {
+                user = dataUserSekarang;
+                break;
+            }
+        }
+        dataUserSekarang.characters[charpilih-1].health = originalPlayer.health;
+        simpanUserData();
+        
+    } catch (const exception& e) {
+        cerr << "[ERROR] " << e.what() << endl;
+    }
+    enter();
+}
 
 // ===================== GACHA SYSTEM =====================
+void gachaCharacter() {
+    try {
+        if (dataUserSekarang.coins < 50) {
+            throw runtime_error("Koin tidak cukup! Diperlukan 50 koin untuk 1x spin.");
+        }
+        system("cls");
+        cout << "\n=== GACHA CHARACTER ===" << endl;
+        cout << "1x spin membutuhkan 50 koin\n";
+        cout << "Koin Anda: " << dataUserSekarang.coins << endl;
+        cout << "1. Spin (50 koin)\n";
+        cout << "2. Kembali\n";
+        cout << "Pilihan: ";
+
+        int pilih;
+        string input;
+        getline(cin, input);
+        if (!ScanInput(input, pilih)) {
+            throw runtime_error("Input tidak valid!");
+        }
+
+        if (pilih == 2) return;
+        if (pilih != 1) {
+            throw runtime_error("Pilihan tidak valid!");
+        }
+
+        // Kurangi koin
+        dataUserSekarang.coins -= 50;
+
+        // 60% chance dapat karakter, 40% zonk
+        if (rand() % 100 < 60 && jumlahKarakter > 0) {
+            // Dapat karakter acak dari pool karakter
+            int randomCharindeks = rand() % jumlahKarakter;
+            Karakter charDapat = karakter[randomCharindeks];
+
+            // Konversi ke UserCharacter
+            UserCharacter newChar;
+            newChar.nama = charDapat.nama;
+            newChar.health = charDapat.health;
+            newChar.attack = charDapat.attack;
+            newChar.defense = charDapat.defense;
+
+            // Tambahkan ke inventory user
+            // Cek apakah karakter sudah dimiliki
+            bool duplikat = false;
+            for (const auto& owned : dataUserSekarang.characters) {
+                if (owned.nama == newChar.nama) {
+                    duplikat = true;
+                    break;
+                }
+            }
+
+            if (duplikat) {
+                cout << "\nAnda mendapatkan karakter yang sudah dimiliki: " << newChar.nama << endl;
+                cout << "Koin Anda dikembalikan sebagian: +10 koin (refund)\n";
+                dataUserSekarang.coins += 10;
+            } else {
+                // Tambahkan ke inventory user
+                dataUserSekarang.characters.push_back(newChar);
+
+                cout << "\n==================================\n";
+                cout << " SELAMAT! Anda mendapatkan:\n";
+                cout << " " << newChar.nama << "\n";
+                cout << " Health: " << newChar.health << "\n";
+                cout << " Attack: " << newChar.attack << "\n";
+                cout << " Defense: " << newChar.defense << "\n";
+                cout << "==================================\n";
+            }
+
+        } else {
+            cout << "\nMaaf, Anda tidak mendapatkan karakter apapun!\n";
+            cout << "Coba lagi lain kali!\n";
+        }
+
+        // Update data user
+        for (auto& user : dataUser) {
+            if (user.username == userSekarang) {
+                user = dataUserSekarang;
+                break;
+            }
+        }
+        simpanUserData();
+
+    } catch (const exception& e) {
+        cerr << "[ERROR] " << e.what() << endl;
+    }
+    enter();
+}
 
 // ===================== MENU ADMIN  =====================
 void adminMenu() {
@@ -1847,15 +2241,17 @@ void userMenu(bool adminsmenu = true) {
     static bool firstTime = true;
     if (firstTime) {
         muatUserData();
-        loadCurrentUserData();
+        loaddataUserSekarang();
         firstTime = false;
     }
     
     while (true) {
+        
         if (adminsmenu) {
+            system("cls");
             cout << "\n=== MENU USER (" << userSekarang << ") ===" << endl;
-            cout << "Koin: " << currentUserData.coins << endl;
-            cout << "Jumlah Karakter: " << currentUserData.characters.size() << endl;
+            cout << "Koin: " << dataUserSekarang.coins << endl;
+            cout << "Jumlah Karakter: " << dataUserSekarang.characters.size() << endl;
         }
         cout << "1. Lihat Karakter" << endl;
         cout << "2. Lihat Karakter (Detailed)" << endl;
@@ -1878,8 +2274,10 @@ void userMenu(bool adminsmenu = true) {
                 tampilkanKarakter(true); 
                 break;
             case 3:
+                battleWithEnemy();
                 break;
             case 4:
+                gachaCharacter();
                 break;
             case 5:
                 is_login = false;
