@@ -936,11 +936,32 @@ void registrasi(int maxUsers = maks_user) {
         }
 
         // Cek duplikasi username
-        for (const auto& user : allUserData) {
-            if (user.username == username) {
-                throw runtime_error("Username sudah digunakan!");
+        try {
+            for (const auto& user : allUserData) {
+                if (user.username == username) {
+                    throw runtime_error("Username sudah digunakan!");
+                }
             }
+        } catch (const runtime_error& e) {
+            cout << "[ERROR] " << e.what() << endl;
+            bersihkanBuffer();
+            enter();
+            return; 
         }
+
+        try {
+            for (int i = 0; i < jumlahUser; i++) {
+                if (users[i].username == username) {
+                    throw runtime_error("Username sudah digunakan");
+                }
+            }
+        } catch (const runtime_error& e) {
+            cout << "[ERROR] " << e.what() << endl;
+            bersihkanBuffer();
+            enter(); 
+            return; 
+        }
+
 
         cout << "Password: ";
         if (!(cin >> password) || password.empty()) {
@@ -1991,6 +2012,93 @@ void battleWithEnemy() {
 }
 
 // ===================== GACHA SYSTEM =====================
+void gachaCharacter() {
+    try {
+        if (currentUserData.coins < 50) {
+            throw runtime_error("Koin tidak cukup! Diperlukan 50 koin untuk 1x spin.");
+        }
+        system("cls");
+        cout << "\n=== GACHA CHARACTER ===" << endl;
+        cout << "1x spin membutuhkan 50 koin\n";
+        cout << "Koin Anda: " << currentUserData.coins << endl;
+        cout << "1. Spin (50 koin)\n";
+        cout << "2. Kembali\n";
+        cout << "Pilihan: ";
+
+        int choice;
+        string input;
+        getline(cin, input);
+        if (!ScanInput(input, choice)) {
+            throw runtime_error("Input tidak valid!");
+        }
+
+        if (choice == 2) return;
+        if (choice != 1) {
+            throw runtime_error("Pilihan tidak valid!");
+        }
+
+        // Kurangi koin
+        currentUserData.coins -= 50;
+
+        // 60% chance dapat karakter, 40% zonk
+        if (rand() % 100 < 60 && jumlahKarakter > 0) {
+            // Dapat karakter acak dari pool karakter
+            int randomCharIndex = rand() % jumlahKarakter;
+            Karakter charDapat = karakter[randomCharIndex];
+
+            // Konversi ke UserCharacter
+            UserCharacter newChar;
+            newChar.nama = charDapat.nama;
+            newChar.health = charDapat.health;
+            newChar.attack = charDapat.attack;
+            newChar.defense = charDapat.defense;
+
+            // Tambahkan ke inventory user
+            // Cek apakah karakter sudah dimiliki
+            bool duplikat = false;
+            for (const auto& owned : currentUserData.characters) {
+                if (owned.nama == newChar.nama) {
+                    duplikat = true;
+                    break;
+                }
+            }
+
+            if (duplikat) {
+                cout << "\nAnda mendapatkan karakter yang sudah dimiliki: " << newChar.nama << endl;
+                cout << "Koin Anda dikembalikan sebagian: +10 koin (refund)\n";
+                currentUserData.coins += 10;
+            } else {
+                // Tambahkan ke inventory user
+                currentUserData.characters.push_back(newChar);
+
+                cout << "\n==================================\n";
+                cout << " SELAMAT! Anda mendapatkan:\n";
+                cout << " " << newChar.nama << "\n";
+                cout << " Health: " << newChar.health << "\n";
+                cout << " Attack: " << newChar.attack << "\n";
+                cout << " Defense: " << newChar.defense << "\n";
+                cout << "==================================\n";
+            }
+
+        } else {
+            cout << "\nMaaf, Anda tidak mendapatkan karakter apapun!\n";
+            cout << "Coba lagi lain kali!\n";
+        }
+
+        // Update data user
+        for (auto& user : allUserData) {
+            if (user.username == userSekarang) {
+                user = currentUserData;
+                break;
+            }
+        }
+        simpanUserData();
+
+    } catch (const exception& e) {
+        cerr << "[ERROR] " << e.what() << endl;
+    }
+    enter();
+}
 
 // ===================== MENU ADMIN  =====================
 void adminMenu() {
@@ -2071,6 +2179,7 @@ void userMenu(bool adminsmenu = true) {
                 battleWithEnemy();
                 break;
             case 4:
+                gachaCharacter();
                 break;
             case 5:
                 is_login = false;
