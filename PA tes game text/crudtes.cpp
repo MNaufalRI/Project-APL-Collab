@@ -1102,19 +1102,21 @@ void tampilkanKarakter(bool detailed = false) {
     } else {
         cout << "\n==================== Daftar Karakter (Detailed) ====================\n"<< endl;
         cout << left << setw(5) << "No" 
-             << setw(20) << "Nama"
-             << setw(15) << "Attack"
-             << setw(15) << "Health"
-             << setw(15) << "Defense"
-             << setw(25) << "Gambar" << endl;
+            << setw(20) << "Nama"
+            << setw(15) << "Attack"
+            << setw(15) << "Health"
+            << setw(15) << "Defense"
+            << setw(15) << "Power Score" << endl;
         cout << "----------------------------------------------------------------------------\n";
 
         for (int i = 0; i < jumlahKarakter; i++) {
+            int powerScore = (karakter[i].attack + karakter[i].defense) * (karakter[i].health / 10);
             cout << left << setw(5) << i+1
-                 << setw(20) << karakter[i].nama
-                 << setw(15) << karakter[i].attack 
-                 << setw(15) << karakter[i].health
-                 << setw(15) << karakter[i].defense << endl;
+                << setw(20) << karakter[i].nama
+                << setw(15) << karakter[i].attack 
+                << setw(15) << karakter[i].health
+                << setw(15) << karakter[i].defense
+                << setw(15) << powerScore << endl;
         }
         cout << "----------------------------------------------------------------------------\n";
     }
@@ -1243,10 +1245,14 @@ void ubahKarakter(int startindeks = 0) {
         }
 
         cout << "Health Baru: ";
+        int healthBaru;
         try {
-            if (!(cin >> karakter[indeks].health) || karakter[indeks].health < 0) {
+            if (!(cin >> healthBaru)) {
                 throw runtime_error("\nHealth harus angka >= 0!");
             }
+
+            updateHealth(karakter[indeks], healthBaru);
+
         } catch (const runtime_error& e) {
             cout << e.what() << endl;
             cin.clear();
@@ -1838,7 +1844,7 @@ void kelolaMusuh() {
     }
 }
 
-// ===================== USER MANAGEMENT FUNCTIONS =====================
+// ===================== FUNGSI KELOLA USER =====================
 void tampilkanUser() {
     if (dataUser.empty()) {
         cout << "Tidak ada user yang tersimpan.\n";
@@ -1959,7 +1965,7 @@ void tampilkanStatusBattle(const UserCharacter& player, const Enemy& enemy, int 
     cout << "----------------------------------------\n\n";
 }
 
-void battleWithEnemy() {
+void battle() {
     try {
         if (dataUserSekarang.characters.empty()) {
             throw runtime_error("Anda tidak memiliki karakter untuk bertarung!");
@@ -2202,18 +2208,20 @@ void gachaCharacter() {
 void adminMenu() {
     int pilihan;
     string input;
+    
     while (true) {
         system("cls");
-        cout << "=== MENU ADMIN (" << userSekarang << ") ===" << endl;
+        cout << "\n=== MENU ADMIN (" << userSekarang << ") ===" << endl;
         cout << "1. Kelola Karakter" << endl;
         cout << "2. Kelola Musuh" << endl;
-        cout << "3. Menu Pencarian" << endl;
-        cout << "4. Logout" << endl;
+        cout << "3. Kelola User" << endl;  // New option
+        cout << "4. Menu Pencarian" << endl;
+        cout << "5. Logout" << endl;
         cout << "Pilihan: ";
         getline(cin, input);
 
         if (!ScanInput(input, pilihan)) {
-            cout << "Input tidak valid! Harap masukkan angka 1-4." << endl;
+            cout << "Input tidak valid! Harap masukkan angka 1-5." << endl;
             enter();
             continue;
         }
@@ -2221,8 +2229,9 @@ void adminMenu() {
         switch (pilihan) {
             case 1: kelolaKarakter(); break;
             case 2: kelolaMusuh(); break;
-            case 3: menuSearch(); break;
-            case 4: 
+            case 3: kelolaUser(); break;  
+            case 4: menuSearch(); break;
+            case 5: 
                 is_login = false;
                 is_admin = false;
                 cout << "Logout berhasil." << endl;
@@ -2274,7 +2283,7 @@ void userMenu(bool adminsmenu = true) {
                 tampilkanKarakter(true); 
                 break;
             case 3:
-                battleWithEnemy();
+                battle();
                 break;
             case 4:
                 gachaCharacter();
